@@ -6,9 +6,9 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 
 const createPlaylist = asyncHandler(async (req, res) => {
-    const {name, description, videos} = req.body
+    const {title, description, videos} = req.body
     const playlist = await Playlist.create({
-        name,
+        title,
         description,
         owner: req.user._id,
         videos
@@ -36,7 +36,7 @@ const getUserPlaylists = asyncHandler(async (req, res) => {
 
 const getPlaylistById = asyncHandler(async (req, res) => {
     const {playlistId} = req.params
-    const playlist = await Playlist.findById(playlistId)
+    const playlist = await Playlist.findById(playlistId).populate("videos", "title thumbnail duration");
     if(!playlist) throw new ApiError(404, "Playlist not found");
     return res.status(200)
     .json(new ApiResponse(200, playlist, "Playlist found"))

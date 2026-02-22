@@ -1,6 +1,7 @@
 import mongoose, { isValidObjectId } from "mongoose";
 import { Video } from "../models/video.model.js";
 import { User } from "../models/user.model.js";
+import {Playlist} from "../models/playlist.model.js"
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -75,7 +76,7 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   // console.log(videoId)
-  // const video = await Video.findById(videoId)
+  const newvideo = await Video.findById(videoId)
   const video = await Video.aggregate([
     {
       $match: {
@@ -125,6 +126,7 @@ const getVideoById = asyncHandler(async (req, res) => {
       },
     },
   ]);
+  console.log(newvideo)
   if (!video) throw new ApiError(400, "Unable to fetch the video");
   return res
     .status(200)
@@ -160,6 +162,14 @@ const deleteVideo = asyncHandler(async (req, res) => {
   if (!video) throw new ApiError(400, "Unable to find the video");
   // const deletedFromCloudinary = await deleteFromCloudinary(video.videoFile)
   // if(!deletedFromCloudinary) throw new ApiError(400, "Unable to delete the video from cloudinay");
+    await Playlist.updateMany(
+    { "videos._id": videoId },
+    {
+      $pull: {
+        videos: { _id: videoId }
+      }
+    }
+  );
   const deleted = await Video.findByIdAndDelete(videoId);
   if (!deleted) throw new ApiError(400, "Unable to delete the video");
   return res
@@ -181,6 +191,7 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
 
 const updateViewCount = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
+  console.log(videoId)
   const video = await Video.findById(videoId);
   video.views++;
   await video.save();
