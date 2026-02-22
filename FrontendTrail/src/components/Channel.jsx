@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import LogoutBtn from "./Header/LogoutBtn";
 import { MoreVertical, Trash2, Pencil } from "lucide-react";
+import {History} from "./index";
 
 function Channel() {
   const navigate = useNavigate();
@@ -193,12 +194,24 @@ function Channel() {
                   getSubscribedChannels();
                 }}
                 className={`py-3 text-sm font-medium border-b-2 transition ${
-                  activeTab === "subscribersTo"
+                  activeTab === "subscribedTo"
                     ? "border-black text-black"
                     : "border-transparent text-gray-500 hover:text-black"
                 }`}
               >
                 Subscribed To
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("watchHistory");
+                }}
+                className={`py-3 text-sm font-medium border-b-2 transition ${
+                  activeTab === "watchHistory"
+                    ? "border-black text-black"
+                    : "border-transparent text-gray-500 hover:text-black"
+                }`}
+              >
+                History
               </button>
             </>
           ) : (
@@ -358,6 +371,8 @@ function Channel() {
             )}
           </div>
         )}
+
+        {activeTab === "watchHistory" && <History />}
       </div>
     </div>
   );
