@@ -48,7 +48,7 @@ function Video() {
 
     try {
       const res = await api.get(
-        `/comments/${videoId}${cursor ? `?lastCreatedAt=${cursor}` : ""}`,
+        `/comments/v/${videoId}${cursor ? `?lastCreatedAt=${cursor}` : ""}`,
       );
       const newComments = res.data.data.comments;
       console.log(newComments);
@@ -103,7 +103,7 @@ function Video() {
       setCursor(null);
       setHasMore(true);
 
-      const res = await api.get(`/comments/${videoId}`);
+      const res = await api.get(`/comments/v/${videoId}`);
       console.log(res.data.data);
       if (!isActive) return;
 
@@ -151,15 +151,30 @@ function Video() {
 
   const addComment = async () => {
     const commentText = commentRef.current.value;
-    if (commentText.trim() === "") setIsComment(false);
-    else setIsComment(true);
-    if (isComment) {
-      const commentadded = await api.post(`/comments/${videoId}`, {
-        content: commentText,
-      });
-      commentRef.current.value = "";
+    console.log(comments)
+    commentRef.current.value = "";
+    if (commentText.trim() !== "") {
+      try {
+        const commentadded = await api.post(`/comments/${videoId}`, {
+          content: commentText,
+        });
+        console.log(commentadded.data.data)
+        setComments(prev => [commentadded.data.data, ...prev])
+      } catch (error) {
+        alert("Unable to post comment")
+      }
     }
   };
+
+  const deleteComment = async (commentId) => {
+    try {
+      const deleted = api.delete(`comments/c/${commentId}`)
+      setComments(prev => prev.filter(e => e._id !== commentId))
+    } catch (error) {
+      alert("Unable to delete comment")
+    }
+  }
+
   const toggleCommentLike = (commentId) => {
     setComments((prev) =>
       prev.map((c) =>
@@ -351,7 +366,7 @@ function Video() {
                       className="hover:cursor-pointer"
                     >
                       <img
-                        src={c.owner.avatar}
+                        src={c?.owner?.avatar || user.avatar}
                         alt=""
                         className="w-9 h-9 rounded-full object-cover"
                       />
@@ -373,7 +388,7 @@ function Video() {
                         {/* DELETE BUTTON (ONLY OWNER) */}
                         {String(c.owner._id) === String(user?._id) && (
                           <button
-                            // onClick={() => deleteComment(c._id)}
+                            onClick={() => deleteComment(c._id)}
                             className="text-xs text-gray-400 hover:text-red-500 transition"
                           >
                             Delete

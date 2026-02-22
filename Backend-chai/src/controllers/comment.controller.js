@@ -142,7 +142,7 @@ const getTweetComments = asyncHandler(async (req, res) => {
   // const {page = 1, limit = 10} = req.query
   const { lastCreatedAt, limit = 10 } = req.query;
   const { tweetId } = req.params;
-  const matchStageVideo = {
+  const matchStage = {
     tweet: new mongoose.Types.ObjectId(tweetId),
   };
   
@@ -155,7 +155,7 @@ const getTweetComments = asyncHandler(async (req, res) => {
   const userId = req.user._id;
 
   const comments = await Comment.aggregate([
-    { $match: matchStageVideo },
+    { $match: matchStage },
 
     { $sort: { createdAt: -1 } }, // newest first
     { $limit: parseInt(limit) },
