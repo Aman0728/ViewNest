@@ -1,22 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { api } from "./Axios/axios";
-import { useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux"; // Added useDispatch if you need to update auth state
 import LogoutBtn from "./Header/LogoutBtn";
 import { History } from "./index";
-import { 
-  MoreVertical, Trash2, Pencil, Settings, KeyRound, 
-  Image as ImageIcon, MonitorUp 
+import {
+  MoreVertical,
+  Trash2,
+  Pencil,
+  Settings,
+  KeyRound,
+  Image as ImageIcon,
+  MonitorUp,
+  X,
+  UploadCloud,
+  User as UserIcon,
 } from "lucide-react";
 
 function Channel() {
   const navigate = useNavigate();
   const { username } = useParams();
-  
+
   const userdata = useSelector((state) => state.auth.userData);
 
-  // States
-  const [activeTab, setActiveTab] = useState("videos"); // Moved to top
+  const [activeTab, setActiveTab] = useState("videos");
   const [videos, setVideos] = useState([]);
   const [channelInfo, setChannelInfo] = useState(null);
   const [tweets, setTweets] = useState([]);
@@ -24,14 +31,34 @@ function Channel() {
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscribers, setSubscribers] = useState([]);
   const [subscriberedChannels, setSubscribedChannels] = useState([]);
-  
-  // Dropdown States
+
   const [openMenuId, setOpenMenuId] = useState(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // 🔹 Toggles for menus
+  // --- MODAL STATES ---
+  const [activeModal, setActiveModal] = useState(null); // 'password', 'avatar', or 'cover'
+  const [updateLoading, setUpdateLoading] = useState(false);
+  const [updateError, setUpdateError] = useState("");
+
+  // Password State
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+
+  // File States
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
   const toggleMenu = (id) => {
     setOpenMenuId(openMenuId === id ? null : id);
+  };
+
+  const closeModal = () => {
+    setActiveModal(null);
+    setOldPassword("");
+    setNewPassword("");
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setUpdateError("");
   };
 
   const getSubscribers = async () => {
@@ -53,9 +80,9 @@ function Channel() {
     const { data } = await api.post(`subscriptions/c/${channelInfo?._id}`);
     setChannelInfo((prev) => ({
       ...prev,
-      subscribersCount: isSubscribed 
-        ? prev.subscribersCount - 1 
-        : prev.subscribersCount + 1
+      subscribersCount: isSubscribed
+        ? prev.subscribersCount - 1
+        : prev.subscribersCount + 1,
     }));
     setIsSubscribed(data.data);
   };
@@ -67,7 +94,7 @@ function Channel() {
         const channelRes = data.data;
         setChannelInfo(channelRes);
         setIsSubscribed(channelRes.isSubscribed);
-        
+
         const channelVideos = await api.get(`videos/c/${channelRes._id}`);
         setVideos(channelVideos.data.data);
       } catch (error) {
@@ -86,19 +113,97 @@ function Channel() {
 
   const handleDelete = async (vId) => {
     const temp = videos;
-    setVideos(prev => prev.filter(e => e._id !== vId));
+    setVideos((prev) => prev.filter((e) => e._id !== vId));
     try {
       await api.delete(`/videos/${vId}`);
       setOpenMenuId(null);
     } catch (error) {
       alert(error.message);
-      setVideos(temp); // Revert if failed
+      setVideos(temp);
+    }
+  };
+
+  // --- UPDATE HANDLERS ---
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const updatePassword = async (e) => {
+    e.preventDefault();
+    setUpdateError("");
+    if (!oldPassword || !newPassword)
+      return setUpdateError("Please fill all fields");
+
+    try {
+      setUpdateLoading(true);
+      await api.post("/users/change-password", { oldPassword, newPassword });
+      alert("Password updated successfully!");
+      closeModal();
+    } catch (err) {
+      setUpdateError(
+        err?.response?.data?.message || "Failed to update password",
+      );
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const updateAvatar = async (e) => {
+    e.preventDefault();
+    setUpdateError("");
+    if (!selectedFile) return setUpdateError("Please select an image first");
+
+    try {
+      setUpdateLoading(true);
+      const formData = new FormData();
+      formData.append("avatar", selectedFile);
+
+      const { data } = await api.patch("/users/avatar", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Update UI immediately
+      setChannelInfo((prev) => ({ ...prev, avatar: data.data.avatar }));
+      closeModal();
+    } catch (err) {
+      setUpdateError(err?.response?.data?.message || "Failed to update avatar");
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+
+  const updateCover = async (e) => {
+    e.preventDefault();
+    setUpdateError("");
+    if (!selectedFile) return setUpdateError("Please select an image first");
+
+    try {
+      setUpdateLoading(true);
+      const formData = new FormData();
+      formData.append("coverImage", selectedFile);
+
+      const { data } = await api.patch("/users/cover-image", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      // Update UI immediately
+      setChannelInfo((prev) => ({ ...prev, coverImage: data.data.coverImage }));
+      closeModal();
+    } catch (err) {
+      setUpdateError(
+        err?.response?.data?.message || "Failed to update cover image",
+      );
+    } finally {
+      setUpdateLoading(false);
     }
   };
 
   return (
-    <div className="max-w-7xl mx-auto min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300">
-      
+    <div className="max-w-7xl mx-auto min-h-screen bg-white dark:bg-gray-950 transition-colors duration-300 relative">
       {/* COVER IMAGE */}
       <div className="w-full h-48 md:h-64 lg:h-72 relative bg-gray-200 dark:bg-gray-800">
         {channelInfo?.coverImage && (
@@ -134,7 +239,7 @@ function Channel() {
 
         {/* HEADER ACTIONS */}
         <div className="flex items-center justify-center sm:justify-start gap-3 w-full md:w-auto">
-          {userdata?._id.toString() !== channelInfo?._id.toString() ? (
+          {userdata?._id?.toString() !== channelInfo?._id?.toString() ? (
             /* VIEWING SOMEONE ELSE'S CHANNEL */
             <button
               onClick={toggleSubscribeStatus}
@@ -149,7 +254,6 @@ function Channel() {
           ) : (
             /* VIEWING OWN CHANNEL */
             <div className="flex items-center gap-3 w-full justify-center md:justify-end">
-              
               {/* UPDATE/SETTINGS DROPDOWN */}
               <div className="relative">
                 <button
@@ -162,24 +266,36 @@ function Channel() {
 
                 {settingsOpen && (
                   <>
-                    <div className="fixed inset-0 z-40" onClick={() => setSettingsOpen(false)}></div>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setSettingsOpen(false)}
+                    ></div>
                     <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-xl rounded-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
                       <button
-                        onClick={() => { setSettingsOpen(false); /* navigate('/settings/password') */ }}
+                        onClick={() => {
+                          setSettingsOpen(false);
+                          setActiveModal("password");
+                        }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                       >
                         <KeyRound size={16} className="text-gray-400" />
                         Update Password
                       </button>
                       <button
-                        onClick={() => { setSettingsOpen(false); /* navigate('/settings/avatar') */ }}
+                        onClick={() => {
+                          setSettingsOpen(false);
+                          setActiveModal("avatar");
+                        }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                       >
                         <ImageIcon size={16} className="text-gray-400" />
                         Update Avatar
                       </button>
                       <button
-                        onClick={() => { setSettingsOpen(false); /* navigate('/settings/cover') */ }}
+                        onClick={() => {
+                          setSettingsOpen(false);
+                          setActiveModal("cover");
+                        }}
                         className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
                       >
                         <MonitorUp size={16} className="text-gray-400" />
@@ -201,9 +317,20 @@ function Channel() {
       <div className="border-b border-gray-200 dark:border-gray-800 px-4 sm:px-6 mt-4 overflow-x-auto no-scrollbar">
         <div className="flex gap-6 sm:gap-8 w-max">
           {[
-            { id: "videos", label: "Videos", action: () => setActiveTab("videos") },
+            {
+              id: "videos",
+              label: "Videos",
+              action: () => setActiveTab("videos"),
+            },
             { id: "tweets", label: "Tweets", action: getTweets },
-            { id: "playlists", label: "Playlists", action: () => { setActiveTab("playlists"); getChannelPlaylist(); } },
+            {
+              id: "playlists",
+              label: "Playlists",
+              action: () => {
+                setActiveTab("playlists");
+                getChannelPlaylist();
+              },
+            },
           ].map((tab) => (
             <button
               key={tab.id}
@@ -219,42 +346,62 @@ function Channel() {
           ))}
 
           {/* PRIVATE TABS (Only visible to owner) */}
-          {userdata?._id.toString() === channelInfo?._id.toString() && [
-            { id: "subscribers", label: "Subscribers", action: () => { setActiveTab("subscribers"); getSubscribers(); } },
-            { id: "subscribedTo", label: "Subscribed To", action: () => { setActiveTab("subscribedTo"); getSubscribedChannels(); } },
-            { id: "watchHistory", label: "History", action: () => setActiveTab("watchHistory") },
-          ].map((tab) => (
-            <button
-              key={tab.id}
-              onClick={tab.action}
-              className={`py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                activeTab === tab.id
-                  ? "border-gray-900 text-gray-900 dark:border-white dark:text-white"
-                  : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+          {userdata?._id?.toString() === channelInfo?._id?.toString() &&
+            [
+              {
+                id: "subscribers",
+                label: "Subscribers",
+                action: () => {
+                  setActiveTab("subscribers");
+                  getSubscribers();
+                },
+              },
+              {
+                id: "subscribedTo",
+                label: "Subscribed To",
+                action: () => {
+                  setActiveTab("subscribedTo");
+                  getSubscribedChannels();
+                },
+              },
+              {
+                id: "watchHistory",
+                label: "History",
+                action: () => setActiveTab("watchHistory"),
+              },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={tab.action}
+                className={`py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === tab.id
+                    ? "border-gray-900 text-gray-900 dark:border-white dark:text-white"
+                    : "border-transparent text-gray-500 hover:text-gray-900 dark:hover:text-gray-300"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
         </div>
       </div>
 
-      {/* TAB CONTENT */}
+      {/* TAB CONTENT (Kept exactly as it was) */}
       <div className="px-4 sm:px-6 py-6 md:py-8 bg-gray-50 dark:bg-gray-950 min-h-[40vh] transition-colors">
-        
+        {/* ... ALL PREVIOUS TAB CONTENT GOES HERE (Videos, Tweets, Playlists, etc.) ... */}
         {/* VIDEOS */}
+
         {activeTab === "videos" && (
           <div className="flex flex-col gap-4 sm:gap-6">
             {videos.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400">No videos yet.</p>
             ) : (
               videos?.map((v) => (
-                <div 
-                  key={v._id} 
+                <div
+                  key={v._id}
                   className="relative group flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 sm:p-4 hover:shadow-md dark:hover:border-gray-700 transition"
                 >
-                  
                   {/* THUMBNAIL */}
+
                   <button
                     onClick={() => navigate(`/video/${v._id}`)}
                     className="w-full sm:w-56 md:w-72 flex-shrink-0 aspect-video rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 relative focus:outline-none"
@@ -267,6 +414,7 @@ function Channel() {
                   </button>
 
                   {/* VIDEO DETAILS */}
+
                   <div className="flex flex-col flex-grow min-w-0 pr-10">
                     <button
                       onClick={() => navigate(`/video/${v._id}`)}
@@ -275,15 +423,21 @@ function Channel() {
                       <h3 className="text-lg font-semibold line-clamp-2 text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                         {v.title}
                       </h3>
-                      
+
                       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1.5">
                         <span>{v.views} views</span>
+
                         {/* If you have a createdAt date, you can add it here: */}
+
                         {/* <span>•</span> */}
-                        {/* <span>{formatTimeAgo(v.createdAt)}</span> */}
+
+                        <span>
+                          {new Date(v?.createdAt).toLocaleDateString()}
+                        </span>
                       </div>
-                      
+
                       {/* Description Snippet (Hidden on very small screens, visible on md+) */}
+
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 hidden md:block">
                         {v.description || "No description available."}
                       </p>
@@ -291,18 +445,26 @@ function Channel() {
                   </div>
 
                   {/* THREE DOT BUTTON (Moved to the far right of the row) */}
+
                   {userdata?._id === channelInfo?._id && (
                     <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20">
                       <button
-                        onClick={(e) => { e.stopPropagation(); toggleMenu(v._id); }}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMenu(v._id);
+                        }}
                         className="p-1.5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition focus:outline-none"
                       >
                         <MoreVertical size={20} />
                       </button>
-                      
+
                       {openMenuId === v._id && (
                         <>
-                          <div className="fixed inset-0 z-30" onClick={() => setOpenMenuId(null)}></div>
+                          <div
+                            className="fixed inset-0 z-30"
+                            onClick={() => setOpenMenuId(null)}
+                          ></div>
+
                           <div className="absolute right-0 top-10 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl rounded-lg text-sm z-40 overflow-hidden w-36">
                             <button
                               onClick={() => navigate(`/video/update/${v._id}`)}
@@ -310,6 +472,7 @@ function Channel() {
                             >
                               <Pencil size={14} /> Update
                             </button>
+
                             <button
                               onClick={() => handleDelete(v._id)}
                               className="flex items-center gap-2 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-red-600 dark:text-red-400 border-t border-gray-100 dark:border-gray-700"
@@ -321,7 +484,6 @@ function Channel() {
                       )}
                     </div>
                   )}
-
                 </div>
               ))
             )}
@@ -329,47 +491,136 @@ function Channel() {
         )}
 
         {/* TWEETS */}
+
         {activeTab === "tweets" && (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {tweets.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400">No tweets yet.</p>
             ) : (
               tweets?.map((t) => (
-                <button
+                <div
                   key={t._id}
                   onClick={() => navigate(`/tweet/${t._id}`)}
-                  className="text-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:shadow-md dark:hover:border-gray-700 transition"
+                  className="relative flex flex-col bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-5 hover:shadow-md dark:hover:border-gray-700 transition group cursor-pointer h-full"
                 >
-                  <p className="text-sm text-gray-800 dark:text-gray-200 line-clamp-4 leading-relaxed">
-                    {t.content}
-                  </p>
-                </button>
+                  {/* TWEET CONTENT */}
+
+                  <div className="flex flex-col flex-grow min-w-0 pr-8">
+                    <p className="text-base sm:text-lg font-medium text-gray-900 dark:text-gray-100 line-clamp-3 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors leading-relaxed whitespace-pre-wrap">
+                      {t.content}
+                    </p>
+                  </div>
+
+                  {/* TWEET META (Date & Images Count) */}
+
+                  <div className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 mt-4 pt-4 border-t border-gray-100 dark:border-gray-800/60">
+                    <span>{new Date(t.createdAt).toLocaleDateString()}</span>
+
+                    {/* Only show image count if there are images */}
+
+                    {t.images?.length > 0 && (
+                      <>
+                        <span className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-600"></span>
+
+                        <div className="flex items-center gap-1.5 text-gray-600 dark:text-gray-300 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-xs font-medium">
+                          <ImageIcon size={14} />
+
+                          <span>
+                            {t.images.length}{" "}
+                            {t.images.length === 1 ? "image" : "images"}
+                          </span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* THREE DOT BUTTON (Matching Video style) */}
+
+                  {userdata?._id === channelInfo?._id && (
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevents navigating to tweet
+
+                          toggleMenu(t._id);
+                        }}
+                        className="p-1.5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition focus:outline-none"
+                      >
+                        <MoreVertical size={20} />
+                      </button>
+
+                      {openMenuId === t._id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-30"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setOpenMenuId(null);
+                            }}
+                          ></div>
+
+                          <div className="absolute right-0 top-10 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl rounded-lg text-sm z-40 overflow-hidden w-36">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/tweet/update/${t._id}`);
+                              }}
+                              className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-left text-gray-700 dark:text-gray-200"
+                            >
+                              <Pencil size={14} /> Update
+                            </button>
+
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(t._id);
+                              }}
+                              className="flex items-center gap-2 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-left text-red-600 dark:text-red-400 border-t border-gray-100 dark:border-gray-700"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))
             )}
           </div>
         )}
 
         {/* PLAYLISTS */}
+
         {activeTab === "playlists" && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {playlist.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 col-span-full">No playlists yet.</p>
+              <p className="text-gray-500 dark:text-gray-400 col-span-full">
+                No playlists yet.
+              </p>
             ) : (
               playlist?.map((p) => (
                 <button
                   key={p._id}
-                  onClick={() => navigate(`/video/${p.videos[0]}?playlist=${p._id}&v=0`)}
+                  onClick={() =>
+                    navigate(`/video/${p.videos[0]}?playlist=${p._id}&v=0`)
+                  }
                   className="text-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md dark:hover:border-gray-700 transition"
                 >
                   <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
                     {/* Optional: Add a playlist cover image here if you have one, otherwise a placeholder icon */}
+
                     <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-black/40 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-white text-xs font-semibold">{p.videos.length}</span>
+                      <span className="text-white text-xs font-semibold">
+                        {p.videos.length}
+                      </span>
                     </div>
                   </div>
+
                   <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
                     {p.title}
                   </h3>
+
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     View full playlist
                   </p>
@@ -380,10 +631,13 @@ function Channel() {
         )}
 
         {/* SUBSCRIBERS */}
+
         {activeTab === "subscribers" && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {subscribers.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 col-span-full">No subscribers yet.</p>
+              <p className="text-gray-500 dark:text-gray-400 col-span-full">
+                No subscribers yet.
+              </p>
             ) : (
               subscribers?.map((t) => (
                 <button
@@ -391,9 +645,19 @@ function Channel() {
                   onClick={() => navigate(`/c/${t?.username}`)}
                   className="flex flex-col items-center text-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md dark:hover:border-gray-700 transition"
                 >
-                  <img src={t.avatar} alt={t.username} className="w-16 h-16 rounded-full object-cover mb-3 bg-gray-100 dark:bg-gray-800" />
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1 w-full">{t.fullName}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 w-full">@{t.username}</p>
+                  <img
+                    src={t.avatar}
+                    alt={t.username}
+                    className="w-16 h-16 rounded-full object-cover mb-3 bg-gray-100 dark:bg-gray-800"
+                  />
+
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1 w-full">
+                    {t.fullName}
+                  </p>
+
+                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 w-full">
+                    @{t.username}
+                  </p>
                 </button>
               ))
             )}
@@ -401,10 +665,13 @@ function Channel() {
         )}
 
         {/* SUBSCRIBED TO */}
+
         {activeTab === "subscribedTo" && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
             {subscriberedChannels.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 col-span-full">Not subscribed to any channels.</p>
+              <p className="text-gray-500 dark:text-gray-400 col-span-full">
+                Not subscribed to any channels.
+              </p>
             ) : (
               subscriberedChannels?.map((t) => (
                 <button
@@ -412,9 +679,19 @@ function Channel() {
                   onClick={() => navigate(`/c/${t?.username}`)}
                   className="flex flex-col items-center text-center bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md dark:hover:border-gray-700 transition"
                 >
-                  <img src={t.avatar} alt={t.username} className="w-16 h-16 rounded-full object-cover mb-3 bg-gray-100 dark:bg-gray-800" />
-                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1 w-full">{t.fullName}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 w-full">@{t.username}</p>
+                  <img
+                    src={t.avatar}
+                    alt={t.username}
+                    className="w-16 h-16 rounded-full object-cover mb-3 bg-gray-100 dark:bg-gray-800"
+                  />
+
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100 line-clamp-1 w-full">
+                    {t.fullName}
+                  </p>
+
+                  <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-1 w-full">
+                    @{t.username}
+                  </p>
                 </button>
               ))
             )}
@@ -422,13 +699,175 @@ function Channel() {
         )}
 
         {/* WATCH HISTORY */}
+
         {activeTab === "watchHistory" && (
           <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 p-4">
-             <History />
+            <History />
           </div>
         )}
-
       </div>
+
+      {/* ================= MODALS ================= */}
+      {activeModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white dark:bg-gray-900 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-200 dark:border-gray-800">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 dark:border-gray-800">
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                {activeModal === "password" && "Update Password"}
+                {activeModal === "avatar" && "Update Avatar"}
+                {activeModal === "cover" && "Update Cover Image"}
+              </h3>
+              <button
+                onClick={closeModal}
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1 rounded-full transition-colors"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Error Message */}
+            {updateError && (
+              <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium rounded-xl border border-red-100 dark:border-red-500/20">
+                {updateError}
+              </div>
+            )}
+
+            {/* Modal Body: Password */}
+            {activeModal === "password" && (
+              <form onSubmit={updatePassword} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Old Password
+                  </label>
+                  <input
+                    type="password"
+                    value={oldPassword}
+                    onChange={(e) => setOldPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all text-gray-900 dark:text-white"
+                    placeholder="Enter current password"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    New Password
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all text-gray-900 dark:text-white"
+                    placeholder="Enter new password"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  disabled={updateLoading}
+                  className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-medium transition-all shadow-sm disabled:opacity-70 flex justify-center items-center"
+                >
+                  {updateLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    "Change Password"
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Modal Body: Avatar */}
+            {activeModal === "avatar" && (
+              <form onSubmit={updateAvatar} className="p-6 space-y-6">
+                <div className="flex justify-center">
+                  <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 border-4 border-gray-50 dark:border-gray-700 flex items-center justify-center shadow-inner">
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <UserIcon size={40} className="text-gray-400" />
+                    )}
+                  </div>
+                </div>
+
+                <label className="flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                  <UploadCloud
+                    size={28}
+                    className="text-gray-400 group-hover:text-indigo-500 transition-colors mb-2"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Click to select new avatar
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleFileChange}
+                  />
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={updateLoading || !selectedFile}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-medium transition-all shadow-sm disabled:opacity-70 flex justify-center items-center"
+                >
+                  {updateLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    "Upload Avatar"
+                  )}
+                </button>
+              </form>
+            )}
+
+            {/* Modal Body: Cover Image */}
+            {activeModal === "cover" && (
+              <form onSubmit={updateCover} className="p-6 space-y-6">
+                <div className="w-full h-32 rounded-xl overflow-hidden bg-gray-100 dark:bg-gray-800 border-2 border-gray-200 dark:border-gray-700 flex items-center justify-center">
+                  {previewUrl ? (
+                    <img
+                      src={previewUrl}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <ImageIcon size={40} className="text-gray-400" />
+                  )}
+                </div>
+
+                <label className="flex flex-col items-center justify-center w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
+                  <UploadCloud
+                    size={28}
+                    className="text-gray-400 group-hover:text-indigo-500 transition-colors mb-2"
+                  />
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    Click to select new cover
+                  </span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    onChange={handleFileChange}
+                  />
+                </label>
+
+                <button
+                  type="submit"
+                  disabled={updateLoading || !selectedFile}
+                  className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-medium transition-all shadow-sm disabled:opacity-70 flex justify-center items-center"
+                >
+                  {updateLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    "Upload Cover Image"
+                  )}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
