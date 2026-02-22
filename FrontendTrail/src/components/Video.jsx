@@ -29,6 +29,7 @@ function Video() {
   const [cursor, setCursor] = useState(null);
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  const [isCommentsOpen, setIsCommentsOpen] = useState(false);
 
   const likeTimeoutRef = useRef({});
   const videoLikeTimeout = useRef(null);
@@ -114,16 +115,16 @@ function Video() {
       await api.post(`videos/views/${videoId}`);
       setVideo(videoData);
       setLiked(videoData.isLiked);
-      
+
       const owner = videoData.owner;
       const channelRes = await api.get(`/users/${owner}`);
       const channelData = channelRes.data.data;
       setChannelInfo(channelData);
       setIsSubscribed(channelData.isSubscribed);
-      
+
       const randomVideos = await api.get("/videos/random/r");
       setVideos(randomVideos.data.data);
-      
+
       if (playlistId) {
         const { data } = await api.get(`/playlists/${playlistId}`);
         setPlaylist(data.data);
@@ -220,20 +221,22 @@ function Video() {
           <div className="w-16 h-16 bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 rounded-full flex items-center justify-center mx-auto mb-6">
             <Lock size={32} />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">Authentication Required</h2>
-          <p className="text-gray-600 dark:text-gray-400 mb-8">Login to access this content and interact with the creator.</p>
+          <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-3">
+            Authentication Required
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-8">
+            Login to access this content and interact with the creator.
+          </p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 transition-colors duration-300 dark:bg-gray-950 min-h-screen">
+    <div className="max-w-[1600px] mx-auto px-4 sm:px-6 py-6 transition-colors duration-300 bg-gray-200 dark:bg-gray-950 min-h-screen">
       <div className="flex flex-col lg:flex-row gap-8">
-        
         {/* === LEFT SIDE (Player & Details) === */}
         <div className="flex-1 min-w-0">
-          
           {/* VIDEO PLAYER */}
           <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-lg border border-gray-200 dark:border-gray-800">
             <video
@@ -252,7 +255,6 @@ function Video() {
 
           {/* CHANNEL INFO & ACTION BUTTONS */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 gap-4">
-            
             {/* Channel info block */}
             <div className="flex items-center gap-4">
               <button
@@ -306,17 +308,20 @@ function Video() {
           <div className="mt-4 bg-gray-100 dark:bg-gray-800/60 rounded-xl p-4 text-sm transition-colors duration-300 hover:bg-gray-200 dark:hover:bg-gray-800">
             {/* Meta Line (Views & Date) */}
             <div className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-              {video?.views?.toLocaleString()} views  •  {new Date(video?.createdAt).toLocaleDateString()}
+              {video?.views?.toLocaleString()} views •{" "}
+              {new Date(video?.createdAt).toLocaleDateString()}
             </div>
-            
+
             {/* Description Text */}
-            <div className={`whitespace-pre-wrap text-gray-800 dark:text-gray-300 ${!showFullDescription ? "line-clamp-2" : ""}`}>
+            <div
+              className={`whitespace-pre-wrap text-gray-800 dark:text-gray-300 ${!showFullDescription ? "line-clamp-2" : ""}`}
+            >
               {video?.description || "No description provided."}
             </div>
 
             {/* Toggle Button */}
             {video?.description && (
-              <button 
+              <button
                 onClick={() => setShowFullDescription(!showFullDescription)}
                 className="mt-2 text-gray-600 dark:text-gray-400 font-semibold hover:text-gray-900 dark:hover:text-gray-100 transition"
               >
@@ -326,95 +331,171 @@ function Video() {
           </div>
 
           {/* === COMMENTS SECTION === */}
+          {/* === COMMENTS SECTION === */}
           <div className="mt-8">
             <h3 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">
               {comments.length} Comments
             </h3>
 
-            {/* COMMENT INPUT */}
-            <div className="flex gap-4 mb-8">
-              <img
-                src={user?.avatar}
-                alt="Your avatar"
-                className="w-10 h-10 rounded-full object-cover shrink-0 bg-gray-200 dark:bg-gray-800"
-              />
-              <div className="flex-1">
-                <textarea
-                  ref={commentRef}
-                  placeholder="Add a comment..."
-                  className="w-full bg-transparent border-b border-gray-300 dark:border-gray-700 outline-none resize-none text-sm pb-2 text-gray-900 dark:text-gray-100 focus:border-black dark:focus:border-white transition-colors"
-                  rows={2}
+            {/* ========================================= */}
+            {/* MOBILE COMMENTS TEASER / TOGGLE BUTTON    */}
+            {/* ========================================= */}
+            <div className="lg:hidden mb-6">
+              <button
+                onClick={() => setIsCommentsOpen(!isCommentsOpen)}
+                className="w-full bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 rounded-2xl p-4 flex items-center justify-between transition-colors text-left"
+              >
+                <div className="flex-1 pr-4">
+                  <h3 className="font-bold text-gray-900 dark:text-gray-100 text-sm">
+                    Comments{" "}
+                    <span className="text-gray-500 font-normal ml-1">
+                      {comments?.length || 0}
+                    </span>
+                  </h3>
+
+                  {/* Show a preview of the first comment if closed */}
+                  {!isCommentsOpen && comments?.length > 0 && (
+                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1.5 line-clamp-1">
+                      <span className="font-medium text-gray-800 dark:text-gray-300">
+                        @{comments[0]?.owner?.username}
+                      </span>
+                      <span className="mx-1">•</span>
+                      {comments[0]?.content}
+                    </p>
+                  )}
+
+                  {!isCommentsOpen && comments?.length === 0 && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1.5">
+                      Be the first to comment...
+                    </p>
+                  )}
+                </div>
+
+                {/* Toggle Icon */}
+                <div className="bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 p-2 rounded-full shrink-0 flex items-center justify-center">
+                  {isCommentsOpen ? (
+                    // X icon for closing
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+                  ) : (
+                    // Chevron down for opening
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m6 9 6 6 6-6" /></svg>
+                  )}
+                </div>
+              </button>
+            </div>
+
+            {/* ========================================= */}
+            {/* MAIN COMMENTS SECTION                     */}
+            {/* ========================================= */}
+            {/* Hidden on mobile unless `isCommentsOpen` is true. Always visible on large screens (`lg:block`). */}
+            <div className={`${isCommentsOpen ? "block" : "hidden"} lg:block`}>
+              
+              {/* COMMENT INPUT */}
+              <div className="flex gap-4 mb-8">
+                <img
+                  src={user?.avatar}
+                  alt="Your avatar"
+                  className="w-10 h-10 rounded-full object-cover shrink-0 bg-gray-200 dark:bg-gray-800"
                 />
-                <div className="flex justify-end gap-2 mt-3">
-                  <button 
-                    className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
-                    onClick={() => { commentRef.current.value = ""; }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={addComment}
-                    className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
-                  >
-                    Comment
-                  </button>
+                <div className="flex-1">
+                  <textarea
+                    ref={commentRef}
+                    placeholder="Add a comment..."
+                    className="w-full bg-transparent border-b border-gray-300 dark:border-gray-700 outline-none resize-none text-sm pb-2 text-gray-900 dark:text-gray-100 focus:border-black dark:focus:border-white transition-colors"
+                    rows={2}
+                  />
+                  <div className="flex justify-end gap-2 mt-3">
+                    <button
+                      className="px-4 py-2 rounded-full text-sm font-medium text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+                      onClick={() => { commentRef.current.value = ""; }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={addComment}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-full text-sm font-medium hover:bg-blue-700 transition"
+                    >
+                      Comment
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* COMMENT LIST */}
-            <div className="space-y-6">
-              {comments?.map((c, i) => {
-                const isLast = i === comments.length - 1;
-                return (
-                  <div key={c._id} ref={isLast ? lastCommentRef : null} className="flex gap-4 group">
-                    <button onClick={() => navigate(`/c/${c.owner.username}`)} className="shrink-0">
-                      <img
-                        src={c?.owner?.avatar || user.avatar}
-                        alt={c.owner.fullName}
-                        className="w-10 h-10 rounded-full object-cover bg-gray-200 dark:bg-gray-800"
-                      />
-                    </button>
+              {/* COMMENT LIST */}
+              <div className="space-y-6">
+                {comments?.map((c, i) => {
+                  const isLast = i === comments.length - 1;
+                  return (
+                    <div
+                      key={c._id}
+                      ref={isLast ? lastCommentRef : null}
+                      className="flex gap-4 group"
+                    >
+                      <button onClick={() => navigate(`/c/${c.owner.username}`)} className="shrink-0">
+                        <img
+                          src={c?.owner?.avatar || user.avatar}
+                          alt={c.owner.fullName}
+                          className="w-10 h-10 rounded-full object-cover bg-gray-200 dark:bg-gray-800"
+                        />
+                      </button>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
-                          @{c.owner.username}
-                        </span>
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {new Date(c.createdAt).toLocaleDateString()}
-                        </span>
-                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className="font-semibold text-sm text-gray-900 dark:text-gray-100">
+                            @{c.owner.username}
+                          </span>
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            {new Date(c.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
 
-                      <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">{c.content}</p>
+                        <p className="text-sm text-gray-800 dark:text-gray-200 whitespace-pre-wrap">
+                          {c.content}
+                        </p>
 
-                      <div className="flex items-center gap-4 mt-2">
-                        <button
-                          onClick={() => toggleCommentLike(c._id)}
-                          className={`flex items-center gap-1.5 text-xs font-medium transition ${
-                            c.isLiked
-                              ? "text-blue-600 dark:text-blue-400"
-                              : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-                          }`}
-                        >
-                          <span className="text-base">👍</span> {c.totalLike || 0}
-                        </button>
-                        
-                        {String(c.owner._id) === String(user?._id) && (
+                        <div className="flex items-center gap-4 mt-2">
                           <button
-                            onClick={() => deleteComment(c._id)}
-                            className="text-xs font-medium text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            onClick={() => toggleCommentLike(c._id)}
+                            className={`flex items-center gap-1.5 text-xs font-medium transition ${
+                              c.isLiked
+                                ? "text-blue-600 dark:text-blue-400"
+                                : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                            }`}
                           >
-                            Delete
+                            <span className="text-base">👍</span>{" "}
+                            {c.totalLike || 0}
                           </button>
-                        )}
+
+                          {String(c.owner._id) === String(user?._id) && (
+                            <button
+                              onClick={() => deleteComment(c._id)}
+                              className="text-xs font-medium text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition opacity-0 group-hover:opacity-100 focus:opacity-100"
+                            >
+                              Delete
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
+
+              {/* MOBILE CLOSE BUTTON AT THE BOTTOM */}
+              {comments?.length > 3 && (
+                <div className="lg:hidden mt-8 flex justify-center border-t border-gray-200 dark:border-gray-800 pt-6">
+                  <button
+                    onClick={() => setIsCommentsOpen(false)}
+                    className="bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 px-6 py-2.5 rounded-full text-sm font-semibold transition-colors flex items-center gap-2"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m18 15-6-6-6 6" /></svg>
+                    Close Comments
+                  </button>
+                </div>
+              )}
             </div>
 
+            {/* LOADING SPINNER */}
             {loading && (
               <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
                 Loading more comments...
@@ -425,29 +506,42 @@ function Video() {
 
         {/* === RIGHT SIDEBAR === */}
         <div className="w-full lg:w-[380px] xl:w-[420px] shrink-0 flex flex-col gap-6">
-          
           {/* PLAYLIST BLOCK */}
           {playlistId && playlist && (
             <div className="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
               <div className="p-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-1">{playlist.title}</h2>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">{playlist.description}</p>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100 line-clamp-1">
+                  {playlist.title}
+                </h2>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                  {playlist.description}
+                </p>
               </div>
               <div className="max-h-[400px] overflow-y-auto p-2 space-y-1">
                 {playlist?.videos?.map((pv, i) => (
                   <button
                     key={pv._id}
-                    onClick={() => navigate(`/video/${pv._id}?playlist=${playlistId}&v=${i}`)}
+                    onClick={() =>
+                      navigate(`/video/${pv._id}?playlist=${playlistId}&v=${i}`)
+                    }
                     className={`w-full flex gap-3 p-2 rounded-lg text-left transition ${
                       String(pv._id) === String(videoId)
                         ? "bg-gray-200 dark:bg-gray-800"
                         : "hover:bg-gray-100 dark:hover:bg-gray-800/50"
                     }`}
                   >
-                    <span className="text-xs text-gray-500 dark:text-gray-400 w-4 text-center self-center">{i + 1}</span>
-                    <img src={pv.thumbnail} alt="" className="w-24 aspect-video rounded object-cover bg-gray-300 dark:bg-gray-700 shrink-0" />
+                    <span className="text-xs text-gray-500 dark:text-gray-400 w-4 text-center self-center">
+                      {i + 1}
+                    </span>
+                    <img
+                      src={pv.thumbnail}
+                      alt=""
+                      className="w-24 aspect-video rounded object-cover bg-gray-300 dark:bg-gray-700 shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">{pv.title}</h3>
+                      <h3 className="text-xs font-semibold text-gray-900 dark:text-gray-100 line-clamp-2">
+                        {pv.title}
+                      </h3>
                     </div>
                   </button>
                 ))}
@@ -457,7 +551,9 @@ function Video() {
 
           {/* RECOMMENDED VIDEOS */}
           <div className="flex flex-col gap-3">
-            <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">Up next</h3>
+            <h3 className="font-bold text-lg text-gray-900 dark:text-gray-100 mb-2">
+              Up next
+            </h3>
             {videos?.map((v) => (
               <button
                 key={v._id}
@@ -475,13 +571,14 @@ function Video() {
                   <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-2 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     {v.title}
                   </h3>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">{v.views} views</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    {v.views} views
+                  </p>
                 </div>
               </button>
             ))}
           </div>
         </div>
-
       </div>
     </div>
   );

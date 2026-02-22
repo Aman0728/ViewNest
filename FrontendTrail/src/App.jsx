@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useDispatch } from 'react-redux'
+import { useDispatch, useSelector } from 'react-redux'
 import './App.css'
 import {login, logout} from "./store/authSlice"
 import { Header } from './components'
@@ -8,6 +8,17 @@ import { Outlet } from 'react-router-dom'
 function App() {
   const [loading, setLoading] = useState(false)
   const dispatch = useDispatch()
+  const themeMode = useSelector((state) => state.theme.mode);
+
+  useEffect(() => {
+    const htmlElement = document.documentElement;
+    
+    if (themeMode === 'dark') {
+      htmlElement.classList.add('dark');
+    } else {
+      htmlElement.classList.remove('dark');
+    }
+  }, [themeMode]);
 
   // useEffect(() => {
   //   authService.getCurrentUser()

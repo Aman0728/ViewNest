@@ -188,7 +188,7 @@ function Tweet() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 min-h-screen transition-colors duration-300 dark:bg-gray-950">
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 min-h-screen transition-colors duration-300 bg-gray-200 dark:bg-gray-950">
       
       {/* === TWEET CARD === */}
       <div className="border border-gray-200 dark:border-gray-800 rounded-2xl p-5 sm:p-6 shadow-sm bg-white dark:bg-gray-900 transition-colors duration-300">

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Container, LogoutBtn } from "../index"; // Ensure LogoutBtn is used if needed, or remove it
+import { toggleTheme } from '../../store/themeSlice';
+import Container from "../Container";
 import ViewNestLogo from "./ViewNest_Logo.png";
 import { 
   Plus, Video, MessageSquare, List, LogIn, UserPlus, Sun, Moon 
@@ -12,36 +13,33 @@ function Header() {
   const navigate = useNavigate();
   const authStatus = useSelector((state) => state.auth.status);
   const user = useSelector(state => state.auth.userData);
+  const themeMode = useSelector((state) => state.theme.mode);
   
   const [open, setOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(false);
-
-  // 🔹 Check for saved theme or system preference on initial load
-  useEffect(() => {
-    const savedTheme = localStorage.getItem("theme");
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  // useEffect(() => {
+  //   const savedTheme = localStorage.getItem("theme");
+  //   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
     
-    if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
-      setIsDarkMode(true);
-      document.documentElement.classList.add("dark");
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove("dark");
-    }
-  }, []);
-
-  // 🔹 Toggle theme function
-  const toggleTheme = () => {
-    if (isDarkMode) {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
-      setIsDarkMode(false);
-    } else {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-      setIsDarkMode(true);
-    }
-  };
+  //   if (savedTheme === "dark" || (!savedTheme && prefersDark)) {
+  //     setIsDarkMode(true);
+  //     document.documentElement.classList.add("dark");
+  //   } else {
+  //     setIsDarkMode(false);
+  //     document.documentElement.classList.remove("dark");
+  //   }
+  // }, []);
+  // const toggleTheme = () => {
+  //   if (isDarkMode) {
+  //     document.documentElement.classList.remove("dark");
+  //     localStorage.setItem("theme", "light");
+  //     setIsDarkMode(false);
+  //   } else {
+  //     document.documentElement.classList.add("dark");
+  //     localStorage.setItem("theme", "dark");
+  //     setIsDarkMode(true);
+  //   }
+  // };
 
   return (
     <header className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl border-b border-gray-200 dark:border-gray-800 transition-colors duration-300">
@@ -58,11 +56,11 @@ function Header() {
             
             {/* 🔹 THEME TOGGLE BUTTON */}
             <button
-              onClick={toggleTheme}
+              onClick={() => dispatch(toggleTheme())}
               className="p-2 rounded-full text-gray-600 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500"
               aria-label="Toggle Theme"
             >
-              {isDarkMode ? <Sun size={20} /> : <Moon size={20} />}
+              {themeMode === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
             </button>
 
             {/* 🔹 USER LOGGED IN */}
