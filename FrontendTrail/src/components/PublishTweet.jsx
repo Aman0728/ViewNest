@@ -8,22 +8,51 @@ function PublishTweet() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  const [images, setImages] = useState([]);
+  const maxImages = 10;
   const maxLength = 2800;
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files);
+
+    if (images.length + files.length > maxImages) {
+      alert(`You can upload up to ${maxImages} images`);
+      return;
+    }
+
+    const previewFiles = files.map((file) => ({
+      file,
+      preview: URL.createObjectURL(file),
+    }));
+
+    setImages((prev) => [...prev, ...previewFiles]);
+  };
+
+  const removeImage = (index) => {
+    setImages((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const submitTweet = async (e) => {
     e.preventDefault();
 
-    if (!content.trim()) return;
+    const formData = new FormData();
+    formData.append("content", content);
+
+    images.forEach((img) => {
+      formData.append("images", img.file);
+    });
 
     try {
       setLoading(true);
 
-      await api.post("/tweets", { content });
+      await api.post("/tweets", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-      navigate("/"); // or profile page
+      setContent("");
+      setImages([]);
     } catch (err) {
-      console.log(err);
-      alert("Failed to post tweet");
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -34,7 +63,6 @@ function PublishTweet() {
       <h1 className="text-2xl font-semibold mb-6">Create Tweet</h1>
 
       <form onSubmit={submitTweet} className="space-y-4">
-
         {/* TEXTAREA */}
         <textarea
           placeholder="What’s happening?"
@@ -47,17 +75,52 @@ function PublishTweet() {
 
         {/* FOOTER */}
         <div className="flex items-center justify-between">
-
           {/* CHARACTER COUNT */}
           <span
             className={`text-xs ${
-              content.length > maxLength - 20
-                ? "text-red-500"
-                : "text-gray-500"
+              content.length > maxLength - 20 ? "text-red-500" : "text-gray-500"
             }`}
           >
             {content.length}/{maxLength}
           </span>
+
+          {/* IMAGE UPLOAD */}
+          <div>
+            <label className="cursor-pointer text-sm text-indigo-600 font-medium">
+              📷 Add Images
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </label>
+          </div>
+
+          {/* IMAGE PREVIEW */}
+          {images.length > 0 && (
+            <div className="grid grid-cols-3 gap-3">
+              {images.map((img, index) => (
+                <div key={index} className="relative">
+                  <img
+                    src={img.preview}
+                    alt="preview"
+                    className="w-full h-24 object-cover rounded-lg"
+                  />
+
+                  {/* REMOVE BUTTON */}
+                  <button
+                    type="button"
+                    onClick={() => removeImage(index)}
+                    className="absolute top-1 right-1 bg-black/70 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                  >
+                    ✕
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           {/* POST BUTTON */}
           <button

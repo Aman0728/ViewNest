@@ -6,7 +6,17 @@ import { Provider } from 'react-redux'
 import store from './store/store.js'
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import Home from './pages/Home.jsx'
-import { AuthLayout, History, Video, Channel, Tweet, PublishVideo, PublishTweet, PublishPlaylist, Playlist } from './components/index.js'
+import { AuthLayout, 
+    History, 
+    Video, 
+    Channel, 
+    Tweet, 
+    PublishVideo, 
+    PublishTweet, 
+    PublishPlaylist, 
+    Playlist,
+    UpdateVideo
+} from './components/index.js'
 
 
 import Signup from './pages/Signup';
@@ -51,6 +61,12 @@ const router = createBrowserRouter([
             path: "/video/:videoId",
             element: (
                 <Video />
+            )
+        },
+        {
+            path: "/video/update/:videoId",
+            element: (
+                <UpdateVideo />
             )
         },
         {

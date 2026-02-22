@@ -4,6 +4,7 @@ import { api } from "./Axios/axios";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import LogoutBtn from "./Header/LogoutBtn";
+import { MoreVertical, Trash2, Pencil } from "lucide-react";
 
 function Channel() {
   const navigate = useNavigate();
@@ -13,28 +14,34 @@ function Channel() {
   const [tweets, setTweets] = useState([]);
   const [playlist, setPlaylist] = useState([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const userdata = useSelector(state => state.auth.userData)
+  const userdata = useSelector((state) => state.auth.userData);
 
-  const [subscribers, setSubscribers] = useState([])
-  const [subscriberedChannels, setSubscribedChannels] = useState([])
+  const [subscribers, setSubscribers] = useState([]);
+  const [subscriberedChannels, setSubscribedChannels] = useState([]);
+
+  const [openMenuId, setOpenMenuId] = useState(null);
+
+  const toggleMenu = (id) => {
+    setOpenMenuId(openMenuId === id ? null : id);
+  };
 
   const getSubscribers = async () => {
-    const {data} = await api.get(`subscriptions/u/${channelInfo?._id}`)
-    const subs = data.data
-    setSubscribers(subs)
-  }
+    const { data } = await api.get(`subscriptions/u/${channelInfo?._id}`);
+    const subs = data.data;
+    setSubscribers(subs);
+  };
   const getSubscribedChannels = async () => {
-    const {data} = await api.get(`subscriptions/c/${channelInfo?._id}`)
-    console.log(channelInfo?._id)
-    const subs = data.data
-    setSubscribedChannels(subs)
-  }
+    const { data } = await api.get(`subscriptions/c/${channelInfo?._id}`);
+    console.log(channelInfo?._id);
+    const subs = data.data;
+    setSubscribedChannels(subs);
+  };
 
   const getChannelPlaylist = async () => {
-    const {data} = await api.get(`/playlists/user/${channelInfo._id}`)
-    console.log(data.data)
-    setPlaylist(data.data)
-  }
+    const { data } = await api.get(`/playlists/user/${channelInfo._id}`);
+    console.log(data.data);
+    setPlaylist(data.data);
+  };
 
   const toggleSubscribeStatus = async () => {
     const { data } = await api.post(`subscriptions/c/${channelInfo?._id}`);
@@ -48,7 +55,7 @@ function Channel() {
     const getChannelInfo = async () => {
       const { data } = await api.get(`/users/c/${username}`);
       const channelRes = data.data;
-      console.log(channelRes)
+      console.log(channelRes);
       setChannelInfo(channelRes);
       setIsSubscribed(channelRes.isSubscribed);
       const channelVideos = await api.get(`videos/c/${data.data._id}`);
@@ -56,7 +63,7 @@ function Channel() {
       setVideos(channelVideos.data.data);
     };
     getChannelInfo();
-    setActiveTab("videos")
+    setActiveTab("videos");
   }, [username]);
   const [activeTab, setActiveTab] = useState("videos");
   const getTweets = async () => {
@@ -65,6 +72,18 @@ function Channel() {
     // console.log(data.data)
     setActiveTab("tweets");
   };
+
+  const handleDelete = async(vId) => {
+    const temp = videos
+    setVideos(prev => (prev.filter(e => e._id !== vId)))
+    try {
+      const deleted = await api.delete(`/videos/${vId}`)
+      console.log(deleted)
+    } catch (error) {
+      alert(error.message)
+      setVideos(temp)
+    }
+  }
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -94,28 +113,25 @@ function Channel() {
             </p>
           </div>
         </div>
-        { userdata?._id.toString() !== channelInfo?._id.toString()
-         ?
-         isSubscribed ? (
-           <button
-             onClick={toggleSubscribeStatus}
-             className=" bg-gray-950 text-white px-4 py-2 rounded-full hover:bg-gray-600 transition"
-           >
-             Subscribed
-           </button>
-         ) : 
-           
-         (
-           <button
-             onClick={toggleSubscribeStatus}
-             className="bg-red-600 text-white px-4 py-2 rounded-full hover:bg-red-700 transition"
-           >
-             Subscribe
-           </button>  
-         )
-         : <LogoutBtn />
-        }
-      
+        {userdata?._id.toString() !== channelInfo?._id.toString() ? (
+          isSubscribed ? (
+            <button
+              onClick={toggleSubscribeStatus}
+              className=" bg-gray-950 text-white px-4 py-2 rounded-full hover:bg-gray-600 transition"
+            >
+              Subscribed
+            </button>
+          ) : (
+            <button
+              onClick={toggleSubscribeStatus}
+              className="bg-red-600 text-white px-4 py-2 rounded-full hover:bg-red-700 transition"
+            >
+              Subscribe
+            </button>
+          )
+        ) : (
+          <LogoutBtn />
+        )}
       </div>
 
       {/* TABS */}
@@ -145,8 +161,8 @@ function Channel() {
 
           <button
             onClick={() => {
-              setActiveTab("playlists")
-              getChannelPlaylist()
+              setActiveTab("playlists");
+              getChannelPlaylist();
             }}
             className={`py-3 text-sm font-medium border-b-2 transition ${
               activeTab === "playlists"
@@ -156,37 +172,38 @@ function Channel() {
           >
             Playlists
           </button>
-          {userdata?._id.toString() === channelInfo?._id.toString() 
-          ? ( <>
-            <button
-            onClick={() => {
-              setActiveTab("subscribers")
-              getSubscribers()
-            }}
-            className={`py-3 text-sm font-medium border-b-2 transition ${
-              activeTab === "subscribers"
-                ? "border-black text-black"
-                : "border-transparent text-gray-500 hover:text-black"
-            }`}
-          >
-            Subscribers
-          </button>
-            <button
-            onClick={() => {
-              setActiveTab("subscribedTo")
-              getSubscribedChannels()
-            }}
-            className={`py-3 text-sm font-medium border-b-2 transition ${
-              activeTab === "subscribersTo"
-                ? "border-black text-black"
-                : "border-transparent text-gray-500 hover:text-black"
-            }`}
-          >
-            Subscribed To
-          </button>
-          </>
-          ) : ""
-          }
+          {userdata?._id.toString() === channelInfo?._id.toString() ? (
+            <>
+              <button
+                onClick={() => {
+                  setActiveTab("subscribers");
+                  getSubscribers();
+                }}
+                className={`py-3 text-sm font-medium border-b-2 transition ${
+                  activeTab === "subscribers"
+                    ? "border-black text-black"
+                    : "border-transparent text-gray-500 hover:text-black"
+                }`}
+              >
+                Subscribers
+              </button>
+              <button
+                onClick={() => {
+                  setActiveTab("subscribedTo");
+                  getSubscribedChannels();
+                }}
+                className={`py-3 text-sm font-medium border-b-2 transition ${
+                  activeTab === "subscribersTo"
+                    ? "border-black text-black"
+                    : "border-transparent text-gray-500 hover:text-black"
+                }`}
+              >
+                Subscribed To
+              </button>
+            </>
+          ) : (
+            ""
+          )}
         </div>
       </div>
 
@@ -201,25 +218,53 @@ function Channel() {
               </div>
             ) : (
               videos?.map((v) => (
-                <button
-                  key={v._id}
-                  onClick={() => navigate(`/video/${v._id}`)}
-                  className="text-left group"
-                >
-                  <div className="aspect-video rounded-lg overflow-hidden bg-black">
-                    <img
-                      src={v.thumbnail}
-                      alt=""
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                    />
-                  </div>
+                <div key={v._id} className="relative group">
+                  {/* THREE DOT BUTTON */}
+                  {userdata?._id === channelInfo?._id &&
+                  <button
+                    onClick={() => toggleMenu(v._id)}
+                    className="absolute top-2 right-2 z-20 bg-black/70 text-white p-1 rounded-full"
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+                  }
+                  {openMenuId === v._id && (
+                    <div className="absolute right-2 top-10 bg-white shadow-lg rounded-md text-sm z-30 overflow-hidden">
+                      <button
+                        onClick={() => navigate(`/video/update/${v._id}`)}
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full"
+                      >
+                        <Pencil size={14} /> Update
+                      </button>
+                      <button
+                        onClick={() => handleDelete(v._id)}
+                        className="flex items-center gap-2 px-4 py-2 hover:bg-gray-100 w-full text-red-600"
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    </div>
+                  )}
 
-                  <h3 className="text-sm font-semibold mt-2 line-clamp-2 group-hover:text-black">
-                    {v.title}
-                  </h3>
+                  {/* VIDEO CARD */}
+                  <button
+                    onClick={() => navigate(`/video/${v._id}`)}
+                    className="text-left"
+                  >
+                    <div className="aspect-video rounded-lg overflow-hidden bg-black">
+                      <img
+                        src={v.thumbnail}
+                        alt=""
+                        className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      />
+                    </div>
 
-                  <p className="text-xs text-gray-500">{v.views} views</p>
-                </button>
+                    <h3 className="text-sm font-semibold mt-2 line-clamp-2 group-hover:text-black">
+                      {v.title}
+                    </h3>
+
+                    <p className="text-xs text-gray-500">{v.views} views</p>
+                  </button>
+                </div>
               ))
             )}
           </div>
@@ -227,7 +272,6 @@ function Channel() {
 
         {/* TWEETS */}
         {activeTab === "tweets" && (
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {tweets.length > 0 ? (
               tweets?.map((t) => (
@@ -239,13 +283,10 @@ function Channel() {
                   <p className="text-sm line-clamp-4">{t.content}</p>
                 </button>
               ))
-
             ) : (
-            <div>
-              <p>
-                No tweets yet
-              </p>
-            </div>
+              <div>
+                <p>No tweets yet</p>
+              </div>
             )}
           </div>
         )}
@@ -257,7 +298,9 @@ function Channel() {
               playlist?.map((p) => (
                 <button
                   key={p._id}
-                  onClick={() => navigate(`/video/${p.videos[0]._id}?playlist=${p._id}&v=0`)}
+                  onClick={() =>
+                    navigate(`/video/${p.videos[0]._id}?playlist=${p._id}&v=0`)
+                  }
                   className="text-left border rounded-lg p-4 hover:shadow-md transition bg-white"
                 >
                   <h3 className="font-semibold text-sm">{p.name}</h3>
@@ -266,7 +309,6 @@ function Channel() {
                   </p>
                 </button>
               ))
-
             ) : (
               <div>
                 <p>No playlist yet</p>
@@ -277,7 +319,6 @@ function Channel() {
 
         {/* SUBSCRIBERS */}
         {activeTab === "subscribers" && (
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {subscribers.length > 0 ? (
               subscribers?.map((t) => (
@@ -289,20 +330,16 @@ function Channel() {
                   <img src={t.avatar} alt="" />
                 </button>
               ))
-
             ) : (
-            <div>
-              <p>
-                No subscribers yet
-              </p>
-            </div>
+              <div>
+                <p>No subscribers yet</p>
+              </div>
             )}
           </div>
         )}
 
         {/* SUBSCRIBERED TO */}
         {activeTab === "subscribedTo" && (
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {subscriberedChannels.length > 0 ? (
               subscriberedChannels?.map((t) => (
@@ -314,13 +351,10 @@ function Channel() {
                   <img src={t.avatar} alt="" />
                 </button>
               ))
-
             ) : (
-            <div>
-              <p>
-                No channels subscribed yet
-              </p>
-            </div>
+              <div>
+                <p>No channels subscribed yet</p>
+              </div>
             )}
           </div>
         )}

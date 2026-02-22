@@ -280,7 +280,8 @@ function Video() {
                 </div>
               </div>
             </button>
-            {isSubscribed ? (
+            {user?._id !== channelInfo?._id ?
+            isSubscribed ? (
               <button
                 onClick={toggleSubscribeStatus}
                 className=" bg-gray-950 text-white px-4 py-2 rounded-full hover:bg-gray-600 transition"
@@ -294,7 +295,8 @@ function Video() {
               >
                 Subscribe
               </button>
-            )}
+            )
+          : ""}
           </div>
 
           {/* COMMENTS */}

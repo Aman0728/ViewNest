@@ -13,6 +13,7 @@ import PublishVideo from "./PublishVideo";
 import PublishTweet from "./PublishTweet";
 import PublishPlaylist from "./PublishPlaylist";
 import Playlist from "./Playlist";
+import UpdateVideo from "./UpdateVideo";
 
 export {
     Container,
@@ -30,4 +31,5 @@ export {
     PublishTweet,
     PublishPlaylist,
     Playlist,
+    UpdateVideo,
 }

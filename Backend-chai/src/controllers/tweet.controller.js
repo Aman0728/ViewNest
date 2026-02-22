@@ -4,14 +4,44 @@ import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
+import { uploadOnCloudinary } from "../utils/cloudinary.js"
 
 const createTweet = asyncHandler(async (req, res) => {
     const {content} = req.body
-    if(!content.trim()) throw new ApiError(400, "Content is required");
-    const tweet = await Tweet.create({
-        content,
-        owner: req.user._id
-    })
+    if (!content.trim()) {
+  throw new ApiError(400, "Content is required");
+}
+
+let images = [];
+
+if (req.files && req.files.length > 0) {
+  const uploadPromises = req.files.map(file =>
+    uploadOnCloudinary(file.path)
+  );
+
+  const uploadedImages = await Promise.all(uploadPromises);
+
+  images = uploadedImages.map(img => {
+    if (!img?.url) {
+      throw new ApiError(400, "Unable to upload image");
+    }
+    return img.url;
+  });
+}
+
+const tweet = await Tweet.create({
+  content,
+  owner: req.user._id,
+  images
+});
+    console.log
+    // const uploadImg = async(img) => {
+    //     const uploadedImage = await uploadOnCloudinary(img)
+    //     if(!uploadedImage.url) throw new ApiError(400, "Unable to upload the image to cloudinary");
+    //     return uploadedImage.url
+    // }
+    // const images = imagePaths.map((img) => uploadImg(img))
+    // console.log(images)
     if(!tweet) throw new ApiError(400, "Unable to create tweet");
     return res.status(200)
     .json(new ApiResponse(200, tweet, "Tweet posted successfully"))
