@@ -42,7 +42,25 @@ const temp = asyncHandler(async (req, res) => {
   const random = await Video.aggregate([
     { $match: { isPublished: true } },
     { $sample: { size: 10 } },
-  ]);
+    {
+      $lookup: {
+        from: "users",
+        localField: "owner",
+        foreignField: "_id",
+        as: "owner"
+      }
+    },
+    { $unwind: "$owner" },
+    {
+      $project: {
+        title: 1,
+        thumbnail: 1,
+        "owner.avatar": 1,
+        "owner.fullName": 1,
+        views: 1
+      }
+    }
+  ])
   return res
     .status(200)
     .json(new ApiResponse(200, random, "Random videos fetched"));

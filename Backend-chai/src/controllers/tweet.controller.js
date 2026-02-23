@@ -61,9 +61,16 @@ const getUserTweets = asyncHandler(async (req, res) => {
             }
         },
         {
+            $addFields: {
+                imageCount: { $size: "$images" }
+            }
+        },
+        {
             $project: {
                 _id: 1,
-                content: 1
+                content: 1,
+                createdAt: 1,
+                imageCount: 1
             }
         }
     ])

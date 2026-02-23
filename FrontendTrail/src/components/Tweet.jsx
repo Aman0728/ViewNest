@@ -134,7 +134,17 @@ function Tweet() {
         const commentadded = await api.post(`/comments/t/${tweetId}`, {
           content: commentText,
         });
-        setComments((prev) => [commentadded.data.data, ...prev]);
+        const newComment = {...commentadded.data.data, 
+          isLiked: false,
+          totalLike: 0,
+          owner: {
+            _id: user._id,
+            avatar: user.avatar,
+            fullName: user.fullName,
+            username: user.username,
+          }
+        }
+        setComments((prev) => [newComment, ...prev]);
       } catch (error) {
         alert("Unable to post comment");
       }
@@ -322,7 +332,7 @@ function Tweet() {
                   className="shrink-0"
                 >
                   <img
-                    src={c?.owner?.avatar || "https://via.placeholder.com/150"}
+                    src={c?.owner?.avatar || user.avatar}
                     alt={c.owner.fullName}
                     className="w-10 h-10 rounded-full object-cover bg-gray-200 dark:bg-gray-800"
                   />
@@ -331,10 +341,10 @@ function Tweet() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="font-semibold text-sm text-gray-900 dark:text-gray-100 truncate max-w-[200px]">
-                      {c.owner.fullName}
+                      {c.owner.fullName || user.fullName}
                     </span>
                     <span className="text-sm text-gray-500 dark:text-gray-400">
-                      @{c.owner.username}
+                      @{c.owner.username || user.username} 
                     </span>
                     <span className="text-xs text-gray-400 dark:text-gray-500 shrink-0 mx-1">·</span>
                     <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">

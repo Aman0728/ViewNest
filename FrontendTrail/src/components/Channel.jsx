@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import { api } from "./Axios/axios";
 import { useSelector, useDispatch } from "react-redux"; // Added useDispatch if you need to update auth state
 import LogoutBtn from "./Header/LogoutBtn";
@@ -15,6 +16,20 @@ import {
   X,
   UploadCloud,
   User as UserIcon,
+  Folder,
+} from "lucide-react";
+
+import {
+  Plus,
+  Video,
+  MessageSquare,
+  List,
+  LogIn,
+  UserPlus,
+  Sun,
+  Moon,
+  Search,
+  ArrowLeft,
 } from "lucide-react";
 
 function Channel() {
@@ -36,17 +51,19 @@ function Channel() {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   // --- MODAL STATES ---
-  const [activeModal, setActiveModal] = useState(null); // 'password', 'avatar', or 'cover'
+  const [activeModal, setActiveModal] = useState(null);
   const [updateLoading, setUpdateLoading] = useState(false);
   const [updateError, setUpdateError] = useState("");
 
-  // Password State
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
+  const [fullName, setFullName] = useState("");
 
   // File States
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+
+  const [open, setOpen] = useState(false);
 
   const toggleMenu = (id) => {
     setOpenMenuId(openMenuId === id ? null : id);
@@ -140,12 +157,31 @@ function Channel() {
 
     try {
       setUpdateLoading(true);
-      await api.post("/users/change-password", { oldPassword, newPassword });
+      await api.post("/users/update-password", { oldPassword, newPassword });
       alert("Password updated successfully!");
       closeModal();
     } catch (err) {
       setUpdateError(
         err?.response?.data?.message || "Failed to update password",
+      );
+    } finally {
+      setUpdateLoading(false);
+    }
+  };
+  const updateFullName = async (e) => {
+    e.preventDefault();
+    setUpdateError("");
+    if (!fullName.trim()) return setUpdateError("Please fill all fields");
+
+    try {
+      setUpdateLoading(true);
+      const { data } = await api.patch("/users/full-Name", { fullName });
+      alert("Full Name updated successfully!");
+      setChannelInfo((prev) => ({ ...prev, fullName: data.data.fullName }));
+      closeModal();
+    } catch (err) {
+      setUpdateError(
+        err?.response?.data?.message || "Failed to update full name",
       );
     } finally {
       setUpdateLoading(false);
@@ -186,7 +222,7 @@ function Channel() {
       const formData = new FormData();
       formData.append("coverImage", selectedFile);
 
-      const { data } = await api.patch("/users/cover-image", formData, {
+      const { data } = await api.patch("/users/coverImage", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
@@ -255,6 +291,51 @@ function Channel() {
             /* VIEWING OWN CHANNEL */
             <div className="flex items-center gap-3 w-full justify-center md:justify-end">
               {/* UPDATE/SETTINGS DROPDOWN */}
+
+              <div className="relative sm:hidden block">
+                <button
+                  onClick={() => setOpen(!open)}
+                  className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white px-4 py-2 rounded-full text-sm font-medium transition-all focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                >
+                  <Plus size={18} />
+                  <span>Create</span>
+                </button>
+
+                {/* DROPDOWN */}
+                {open && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-40"
+                      onClick={() => setOpen(false)}
+                    ></div>
+                    <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 rounded-xl shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                      <NavLink
+                        to="/video/v/publish"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <Video size={16} className="text-indigo-500" /> Video
+                      </NavLink>
+                      <NavLink
+                        to="/tweet/t/publish"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <MessageSquare size={16} className="text-indigo-500" />{" "}
+                        Tweet
+                      </NavLink>
+                      <NavLink
+                        to="/playlist/p/publish"
+                        onClick={() => setOpen(false)}
+                        className="flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      >
+                        <List size={16} className="text-indigo-500" /> Playlist
+                      </NavLink>
+                    </div>
+                  </>
+                )}
+              </div>
+
               <div className="relative">
                 <button
                   onClick={() => setSettingsOpen(!settingsOpen)}
@@ -270,7 +351,18 @@ function Channel() {
                       className="fixed inset-0 z-40"
                       onClick={() => setSettingsOpen(false)}
                     ></div>
+
                     <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 shadow-xl rounded-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+                      <button
+                        onClick={() => {
+                          setSettingsOpen(false);
+                          setActiveModal("fullName");
+                        }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors text-left"
+                      >
+                        <UserIcon size={16} className="text-gray-400" />
+                        Update Full Name
+                      </button>
                       <button
                         onClick={() => {
                           setSettingsOpen(false);
@@ -385,11 +477,7 @@ function Channel() {
         </div>
       </div>
 
-      {/* TAB CONTENT (Kept exactly as it was) */}
       <div className="px-4 sm:px-6 py-6 md:py-8 bg-gray-50 dark:bg-gray-950 min-h-[40vh] transition-colors">
-        {/* ... ALL PREVIOUS TAB CONTENT GOES HERE (Videos, Tweets, Playlists, etc.) ... */}
-        {/* VIDEOS */}
-
         {activeTab === "videos" && (
           <div className="flex flex-col gap-4 sm:gap-6">
             {videos.length === 0 ? (
@@ -518,7 +606,7 @@ function Channel() {
 
                     {/* Only show image count if there are images */}
 
-                    {t.images?.length > 0 && (
+                    {t.imageCount > 0 && (
                       <>
                         <span className="w-1 h-1 rounded-full bg-gray-400 dark:bg-gray-600"></span>
 
@@ -526,8 +614,8 @@ function Channel() {
                           <ImageIcon size={14} />
 
                           <span>
-                            {t.images.length}{" "}
-                            {t.images.length === 1 ? "image" : "images"}
+                            {t.imageCount}{" "}
+                            {t.imageCount === 1 ? "image" : "images"}
                           </span>
                         </div>
                       </>
@@ -609,6 +697,7 @@ function Channel() {
                 >
                   <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
                     {/* Optional: Add a playlist cover image here if you have one, otherwise a placeholder icon */}
+                    <Folder size={20} />
 
                     <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-black/40 backdrop-blur-sm flex items-center justify-center">
                       <span className="text-white text-xs font-semibold">
@@ -731,6 +820,36 @@ function Channel() {
               <div className="mx-6 mt-4 p-3 bg-red-50 dark:bg-red-500/10 text-red-600 dark:text-red-400 text-sm font-medium rounded-xl border border-red-100 dark:border-red-500/20">
                 {updateError}
               </div>
+            )}
+
+            {activeModal === "fullName" && (
+              <form onSubmit={updateFullName} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    className="w-full px-4 py-3 bg-gray-50 dark:bg-gray-950 border border-gray-300 dark:border-gray-700 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400 transition-all text-gray-900 dark:text-white"
+                    placeholder="Enter your new full name"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={updateLoading || !fullName.trim()}
+                  className="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-medium transition-all shadow-sm disabled:opacity-70 flex justify-center items-center"
+                >
+                  {updateLoading ? (
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                  ) : (
+                    "Save Changes"
+                  )}
+                </button>
+              </form>
             )}
 
             {/* Modal Body: Password */}

@@ -77,7 +77,7 @@ function VideoCard({ video }) {
         <div className="w-9 h-9 rounded-full bg-gray-200 dark:bg-gray-700 overflow-hidden flex-shrink-0 mt-0.5">
           <img
             src={video.owner?.avatar || "https://ui-avatars.com/api/?name=User&background=random"}
-            alt={video.owner?.username}
+            alt={video.owner?.fullName}
             className="w-full h-full object-cover"
           />
         </div>
@@ -89,7 +89,7 @@ function VideoCard({ video }) {
           
           <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400 mt-1">
             <span className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors truncate">
-              @{video.owner?.username || "Unknown Channel"}
+              @{video.owner?.fullName || "Unknown Channel"}
             </span>
             <div className="flex items-center gap-1 mt-0.5">
               <span>{video.views || 0} views</span>

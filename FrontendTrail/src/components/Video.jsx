@@ -138,13 +138,24 @@ function Video() {
 
   const addComment = async () => {
     const commentText = commentRef.current.value;
+    console.log(comments)
     commentRef.current.value = "";
     if (commentText.trim() !== "") {
       try {
-        const commentadded = await api.post(`/comments/${videoId}`, {
+        const commentadded = await api.post(`/comments/v/${videoId}`, {
           content: commentText,
         });
-        setComments((prev) => [commentadded.data.data, ...prev]);
+        const newComment = {...commentadded.data.data, 
+          isLiked: false,
+          totalLike: 0,
+          owner: {
+            _id: user._id,
+            avatar: user.avatar,
+            fullName: user.fullName,
+            username: user.username,
+          }
+        }
+        setComments((prev) => [newComment, ...prev]);
       } catch (error) {
         alert("Unable to post comment");
       }
