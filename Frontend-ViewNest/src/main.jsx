@@ -22,7 +22,7 @@ import {
   UpdatePlaylist
 } from "./components/index.js";
 
-import Signup from "./pages/Signup";
+import Signup from "./pages/Signup.jsx";
 import Login from "./pages/Login.jsx";
 
 const router = createBrowserRouter([

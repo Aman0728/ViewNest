@@ -94,11 +94,12 @@ const publishAVideo = asyncHandler(async (req, res) => {
 const getVideoById = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   // console.log(videoId)
-  const newvideo = await Video.findById(videoId)
+  // const newvideo = await Video.findById(videoId)
   const video = await Video.aggregate([
     {
       $match: {
         _id: new mongoose.Types.ObjectId(videoId),
+        isPublished: true
       },
     },
     {
@@ -144,7 +145,6 @@ const getVideoById = asyncHandler(async (req, res) => {
       },
     },
   ]);
-  console.log(newvideo)
   if (!video) throw new ApiError(400, "Unable to fetch the video");
   return res
     .status(200)
@@ -154,19 +154,34 @@ const getVideoById = asyncHandler(async (req, res) => {
 
 const updateVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
-  const thumbnail = req.file.path;
+  const thumbnail = req.file?.path;
   const { title, description } = req.body;
-  if ([title, description, thumbnail].some((e) => e.trim === "")) {
+  let updatedVideo;
+  if ([title, description, thumbnail].some((e) => e?.trim === "")) {
     throw new ApiError(400, "All the fields are required");
   }
   const uploadThumbnail = await uploadOnCloudinary(thumbnail);
-  const updatedVideo = await Video.findByIdAndUpdate(
-    videoId,
-    {
-      $set: { title, description, thumbnail: uploadThumbnail.url },
-    },
-    { new: true, runValidators: false },
-  );
+  if(!uploadThumbnail?.url){
+    updatedVideo = await Video.findByIdAndUpdate(
+      videoId,
+      {
+        $set: { title, description, },
+      },
+      { new: true, runValidators: false },
+    );
+  }else {
+    const existingVideo = await Video.findById(videoId);
+    if(!existingVideo) throw new ApiError(400, "Unable to find the video");
+    await deleteFromCloudinary(existingVideo.thumbnail, "image")
+    updatedVideo = await Video.findByIdAndUpdate(
+      videoId,
+      {
+        $set: { title, description, thumbnail: uploadThumbnail.url },
+      },
+      { new: true, runValidators: false },
+    );
+
+  }
   if (!updatedVideo) throw new ApiError(400, "Unable to update the video");
   return res
     .status(200)
@@ -178,8 +193,12 @@ const deleteVideo = asyncHandler(async (req, res) => {
   const { videoId } = req.params;
   const video = await Video.findById(videoId);
   if (!video) throw new ApiError(400, "Unable to find the video");
-  // const deletedFromCloudinary = await deleteFromCloudinary(video.videoFile)
-  // if(!deletedFromCloudinary) throw new ApiError(400, "Unable to delete the video from cloudinay");
+  const deletedVideoFromCloudinary = await deleteFromCloudinary(video.videoFile, "video")
+  const deletedThumbnailFromCloudinary = await deleteFromCloudinary(video.thumbnail, "image")
+  console.log(deletedVideoFromCloudinary, deletedThumbnailFromCloudinary)
+  if(!deletedVideoFromCloudinary || !deletedThumbnailFromCloudinary) {
+    throw new ApiError(400, "Unable to delete the video from cloudinary");
+  }
     await Playlist.updateMany(
     { "videos._id": videoId },
     {
