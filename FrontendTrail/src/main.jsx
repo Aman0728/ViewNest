@@ -18,6 +18,8 @@ import {
   Playlist,
   UpdateVideo,
   UpdateTweet,
+  Search,
+  UpdatePlaylist
 } from "./components/index.js";
 
 import Signup from "./pages/Signup";
@@ -127,6 +129,22 @@ const router = createBrowserRouter([
         element: (
           <AuthLayout authentication={true}>
             <Playlist />
+          </AuthLayout>
+        ),
+      },
+      {
+        path: "/playlist/update/:playlistId",
+        element: (
+          <AuthLayout authentication={true}>
+            <UpdatePlaylist />
+          </AuthLayout>
+        ),
+      },
+      {
+        path: "/search",
+        element: (
+          <AuthLayout authentication={true}>
+            <Search />
           </AuthLayout>
         ),
       },

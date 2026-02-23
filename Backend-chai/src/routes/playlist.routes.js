@@ -10,6 +10,7 @@ import {
 } from "../controllers/playlist.controller.js"
 import { verifyJWT } from '../middlewires/auth.middleware.js';
 
+
 const router = Router();
 
 router.use(verifyJWT); // Apply verifyJWT middleware to all routes in this file

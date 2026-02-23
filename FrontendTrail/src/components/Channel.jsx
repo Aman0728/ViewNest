@@ -16,20 +16,12 @@ import {
   X,
   UploadCloud,
   User as UserIcon,
-  Folder,
-} from "lucide-react";
-
-import {
   Plus,
   Video,
   MessageSquare,
   List,
-  LogIn,
-  UserPlus,
-  Sun,
-  Moon,
-  Search,
-  ArrowLeft,
+  Globe,
+  Lock
 } from "lucide-react";
 
 function Channel() {
@@ -43,6 +35,7 @@ function Channel() {
   const [channelInfo, setChannelInfo] = useState(null);
   const [tweets, setTweets] = useState([]);
   const [playlist, setPlaylist] = useState([]);
+  const [playlistImage, setPlaylistImage] = useState(null);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [subscribers, setSubscribers] = useState([]);
   const [subscriberedChannels, setSubscribedChannels] = useState([]);
@@ -90,7 +83,9 @@ function Channel() {
 
   const getChannelPlaylist = async () => {
     const { data } = await api.get(`/playlists/user/${channelInfo._id}`);
-    setPlaylist(data.data);
+    console.log(data.data);
+    setPlaylist(data.data.getPlaylist || []);
+    setPlaylistImage(data.data.image || null);
   };
 
   const toggleSubscribeStatus = async () => {
@@ -102,6 +97,21 @@ function Channel() {
         : prev.subscribersCount + 1,
     }));
     setIsSubscribed(data.data);
+  };
+
+  const handleTogglePublish = async (videoId, currentStatus) => {
+    try {
+      await api.patch(`/videos/toggle/publish/${videoId}`);
+      setVideos((prev) =>
+        prev.map((video) =>
+          video._id === videoId
+            ? { ...video, isPublished: !currentStatus }
+            : video,
+        ),
+      );
+    } catch (error) {
+      console.error("Failed to toggle publish status:", error);
+    }
   };
 
   useEffect(() => {
@@ -137,6 +147,17 @@ function Channel() {
     } catch (error) {
       alert(error.message);
       setVideos(temp);
+    }
+  };
+
+  const handleDeletePlaylist = async (pId) => {
+    const temp = playlist;
+    setPlaylist((prev) => prev.filter((e) => e._id !== pId));
+    try {
+      await api.delete(`/playlists/${pId}`);
+    } catch (error) {
+      alert(error.message);
+      setPlaylist(temp);
     }
   };
 
@@ -489,7 +510,6 @@ function Channel() {
                   className="relative group flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 sm:p-4 hover:shadow-md dark:hover:border-gray-700 transition"
                 >
                   {/* THUMBNAIL */}
-
                   <button
                     onClick={() => navigate(`/video/${v._id}`)}
                     className="w-full sm:w-56 md:w-72 flex-shrink-0 aspect-video rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 relative focus:outline-none"
@@ -502,7 +522,6 @@ function Channel() {
                   </button>
 
                   {/* VIDEO DETAILS */}
-
                   <div className="flex flex-col flex-grow min-w-0 pr-10">
                     <button
                       onClick={() => navigate(`/video/${v._id}`)}
@@ -514,26 +533,48 @@ function Channel() {
 
                       <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1.5">
                         <span>{v.views} views</span>
-
-                        {/* If you have a createdAt date, you can add it here: */}
-
                         {/* <span>•</span> */}
-
                         <span>
                           {new Date(v?.createdAt).toLocaleDateString()}
                         </span>
                       </div>
 
                       {/* Description Snippet (Hidden on very small screens, visible on md+) */}
-
                       <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 hidden md:block">
                         {v.description || "No description available."}
                       </p>
                     </button>
+
+                    {/* TOGGLE PUBLISH BUTTON (Only visible to channel owner) */}
+                    {userdata?._id === channelInfo?._id && (
+                      <div className="mt-3 sm:mt-auto pt-2">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            // Call your toggle function here
+                            handleTogglePublish(v._id, v.isPublished);
+                          }}
+                          className={`flex items-center w-max gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1 dark:focus:ring-offset-gray-900 ${
+                            v.isPublished
+                              ? "bg-green-100 text-green-700 hover:bg-green-200 dark:bg-green-900/30 dark:text-green-400 dark:hover:bg-green-900/50 focus:ring-green-500"
+                              : "bg-amber-100 text-amber-700 hover:bg-amber-200 dark:bg-amber-900/30 dark:text-amber-400 dark:hover:bg-amber-900/50 focus:ring-amber-500"
+                          }`}
+                        >
+                          {v.isPublished ? (
+                            <>
+                              <Globe size={14} /> Published
+                            </>
+                          ) : (
+                            <>
+                              <Lock size={14} /> Private
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
 
-                  {/* THREE DOT BUTTON (Moved to the far right of the row) */}
-
+                  {/* THREE DOT BUTTON  */}
                   {userdata?._id === channelInfo?._id && (
                     <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20">
                       <button
@@ -681,39 +722,118 @@ function Channel() {
         {/* PLAYLISTS */}
 
         {activeTab === "playlists" && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="flex flex-col gap-4 sm:gap-6">
             {playlist.length === 0 ? (
-              <p className="text-gray-500 dark:text-gray-400 col-span-full">
+              <p className="text-gray-500 dark:text-gray-400">
                 No playlists yet.
               </p>
             ) : (
               playlist?.map((p) => (
-                <button
+                <div
                   key={p._id}
-                  onClick={() =>
-                    navigate(`/video/${p.videos[0]}?playlist=${p._id}&v=0`)
-                  }
-                  className="text-left bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 hover:shadow-md dark:hover:border-gray-700 transition"
+                  className="relative group flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 sm:p-4 hover:shadow-md dark:hover:border-gray-700 transition"
                 >
-                  <div className="aspect-video bg-gray-100 dark:bg-gray-800 rounded-lg mb-3 flex items-center justify-center relative overflow-hidden">
-                    {/* Optional: Add a playlist cover image here if you have one, otherwise a placeholder icon */}
-                    <Folder size={20} />
+                  {/* THUMBNAIL WITH PLAYLIST OVERLAY */}
+                  <button
+                    onClick={() =>
+                      navigate(`/video/${p.videos[0]}?playlist=${p._id}&v=0`)
+                    }
+                    className="w-full sm:w-56 md:w-72 flex-shrink-0 aspect-video rounded-lg overflow-hidden bg-gray-200 dark:bg-gray-800 relative focus:outline-none"
+                  >
+                    <img
+                      src={p.thumbnail || playlistImage}
+                      alt={p.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    />
 
-                    <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-black/40 backdrop-blur-sm flex items-center justify-center">
-                      <span className="text-white text-xs font-semibold">
-                        {p.videos.length}
+                    {/* Playlist Video Count Overlay */}
+                    <div className="absolute right-0 top-0 bottom-0 w-1/3 bg-black/60 backdrop-blur-sm flex flex-col items-center justify-center gap-1 transition-colors">
+                      <span className="text-white text-sm font-semibold">
+                        {p.videos?.length || 0}
+                      </span>
+                      <span className="text-gray-300 text-[10px] uppercase tracking-wider font-medium">
+                        Videos
                       </span>
                     </div>
+                  </button>
+
+                  {/* PLAYLIST DETAILS */}
+                  <div className="flex flex-col flex-grow min-w-0 pr-10">
+                    <button
+                      onClick={() =>
+                        navigate(`/video/${p.videos[0]}?playlist=${p._id}&v=0`)
+                      }
+                      className="text-left focus:outline-none"
+                    >
+                      <h3 className="text-lg font-semibold line-clamp-2 text-gray-900 dark:text-gray-100 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                        {p.title}
+                      </h3>
+
+                      <div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400 mt-1.5">
+                        <span className="font-medium text-indigo-600 dark:text-indigo-400">
+                          View full playlist
+                        </span>
+
+                        {p.createdAt && (
+                          <>
+                            <span>•</span>
+                            <span>
+                              {new Date(p.createdAt).toLocaleDateString()}
+                            </span>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Description Snippet (Hidden on very small screens, visible on md+) */}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 hidden md:block">
+                        {p.description ||
+                          "No description available for this playlist."}
+                      </p>
+                    </button>
                   </div>
 
-                  <h3 className="font-semibold text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
-                    {p.title}
-                  </h3>
+                  {/* THREE DOT BUTTON (For Channel Owner) */}
+                  {userdata?._id === channelInfo?._id && (
+                    <div className="absolute top-3 right-3 sm:top-4 sm:right-4 z-20">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMenu(p._id);
+                        }}
+                        className="p-1.5 text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-full transition focus:outline-none"
+                      >
+                        <MoreVertical size={20} />
+                      </button>
 
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                    View full playlist
-                  </p>
-                </button>
+                      {openMenuId === p._id && (
+                        <>
+                          <div
+                            className="fixed inset-0 z-30"
+                            onClick={() => setOpenMenuId(null)}
+                          ></div>
+
+                          <div className="absolute right-0 top-10 bg-white dark:bg-gray-800 border border-gray-100 dark:border-gray-700 shadow-xl rounded-lg text-sm z-40 overflow-hidden w-36">
+                            <button
+                              onClick={() =>
+                                navigate(`/playlist/update/${p._id}`)
+                              } // Adjust your update route
+                              className="flex items-center gap-2 px-4 py-2.5 hover:bg-gray-50 dark:hover:bg-gray-700 w-full text-gray-700 dark:text-gray-200"
+                            >
+                              <Pencil size={14} /> Update
+                            </button>
+
+                            <button
+                              onClick={() => handleDeletePlaylist(p._id)} // Create a specific delete handler for playlists
+                              className="flex items-center gap-2 px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/20 w-full text-red-600 dark:text-red-400 border-t border-gray-100 dark:border-gray-700"
+                            >
+                              <Trash2 size={14} /> Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
               ))
             )}
           </div>
@@ -848,6 +968,8 @@ function Channel() {
                   ) : (
                     "Save Changes"
                   )}
+                          // Assuming you use the same state for menu tracking.
+                          // If IDs clash, you might want to use `setOpenMenuId('playlist-' + p._id)`
                 </button>
               </form>
             )}

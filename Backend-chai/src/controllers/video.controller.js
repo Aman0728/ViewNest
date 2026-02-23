@@ -225,6 +225,26 @@ const updateViewCount = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, video.views, "Views updated"));
 });
 
+const searchVideos = asyncHandler(async (req, res) => {
+  const { query } = req.params;
+  console.log(query)
+  // const videos = await Video.find({ $text: { $search: query }, isPublished: true }).sort({ score: { $meta: "textScore" } })
+  //                           .populate("owner", "fullName avatar");
+  const videos = await Video.find(
+    {
+      $or: [
+        { title: { $regex: query, $options: "i" } },
+        { description: { $regex: query, $options: "i" } },
+      ],
+      isPublished: true,
+    },
+  ).populate("owner", "fullName avatar");
+  console.log(videos)
+  return res
+    .status(200)
+    .json(new ApiResponse(200, videos, "Search results fetched successfully"));
+});
+
 export {
   getAllVideos,
   publishAVideo,
@@ -235,4 +255,5 @@ export {
   temp,
   getChannelVideos,
   updateViewCount,
+  searchVideos,
 };
