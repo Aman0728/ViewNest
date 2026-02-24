@@ -507,7 +507,7 @@ function Channel() {
               videos?.map((v) => (
                 <div
                   key={v._id}
-                  className="relative group flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 sm:p-4 hover:shadow-md dark:hover:border-gray-700 transition max-h-44"
+                  className="relative group flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 sm:p-4 hover:shadow-md dark:hover:border-gray-700 transition md:max-h-44"
                 >
                   {/* THUMBNAIL */}
                   <button
