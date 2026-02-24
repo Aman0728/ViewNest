@@ -49,9 +49,7 @@ function Header() {
       <Container>
         <nav className="flex items-center justify-between py-3 md:py-4 gap-2 sm:gap-4 relative h-[64px] md:h-auto">
           
-          {/* ========================================= */}
           {/* MOBILE EXPANDED SEARCH BAR                */}
-          {/* ========================================= */}
           {isMobileSearchOpen ? (
             <div 
               ref={mobileSearchRef} 
@@ -85,9 +83,8 @@ function Header() {
               </form>
             </div>
           ) : (
-            /* ========================================= */
+            
             /* STANDARD NAVIGATION LAYOUT                */
-            /* ========================================= */
             <>
               {/* LEFT — LOGO */}
               <NavLink to="/" className="flex-shrink-0">

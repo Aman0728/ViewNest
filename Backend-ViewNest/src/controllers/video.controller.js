@@ -99,7 +99,14 @@ const getVideoById = asyncHandler(async (req, res) => {
     {
       $match: {
         _id: new mongoose.Types.ObjectId(videoId),
-        isPublished: true
+      },
+    },
+    {
+      $match: {
+        $or: [
+          { isPublished: true },
+          { owner: new mongoose.Types.ObjectId(req.user._id) },
+        ],
       },
     },
     {

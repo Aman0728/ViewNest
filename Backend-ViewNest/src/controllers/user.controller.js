@@ -391,6 +391,17 @@ const getWatchHistory = asyncHandler(async (req, res) => {
     {
       $unwind: { path: "$video" },
     },
+    // {
+    //   $lookup: {
+    //     from: "users",
+    //     localField: "owner",
+    //     foreignField: "_id",
+    //     as: "owner",
+    //   },
+    // },
+    // {
+    //   $unwind: { path: "$owner" },
+    // },
     {
       $project: {
         password: 0,

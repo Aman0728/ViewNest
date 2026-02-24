@@ -77,7 +77,7 @@ function History() {
                 {history.map((item) => (
                   <div
                     key={item.video._id}
-                    className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-all group relative pr-12 sm:pr-4"
+                    className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-all group relative pr-12 sm:pr-4 max-h-44"
                   >
                     {/* THUMBNAIL */}
                     <div 
@@ -109,7 +109,7 @@ function History() {
                       </button>
 
                       <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-2">
-                        {item.video.owner?.fullName || "Unknown Creator"}
+                        {item.fullName || "Unknown Creator"}
                       </p>
 
                       <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500 dark:text-gray-400 mt-1.5">
