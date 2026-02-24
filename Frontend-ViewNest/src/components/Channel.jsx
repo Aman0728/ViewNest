@@ -500,14 +500,14 @@ function Channel() {
 
       <div className="px-4 sm:px-6 py-6 md:py-8 bg-gray-50 dark:bg-gray-950 min-h-[40vh] transition-colors">
         {activeTab === "videos" && (
-          <div className="flex flex-col gap-4 sm:gap-6">
+          <div className="flex flex-col gap-4 sm:gap-6 ">
             {videos.length === 0 ? (
               <p className="text-gray-500 dark:text-gray-400">No videos yet.</p>
             ) : (
               videos?.map((v) => (
                 <div
                   key={v._id}
-                  className="relative group flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 sm:p-4 hover:shadow-md dark:hover:border-gray-700 transition"
+                  className="relative group flex flex-col sm:flex-row gap-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-3 sm:p-4 hover:shadow-md dark:hover:border-gray-700 transition max-h-44"
                 >
                   {/* THUMBNAIL */}
                   <button
@@ -540,8 +540,8 @@ function Channel() {
                       </div>
 
                       {/* Description Snippet (Hidden on very small screens, visible on md+) */}
-                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 hidden md:block">
-                        {v.description || "No description available."}
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-3 line-clamp-2 hidden md:block ">
+                        {v.description.slice(0, 250) || "No description available."}
                       </p>
                     </button>
 
