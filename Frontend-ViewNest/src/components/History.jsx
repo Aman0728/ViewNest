@@ -77,7 +77,7 @@ function History() {
                 {history.map((item) => (
                   <div
                     key={item.video._id}
-                    className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-all group relative pr-12 sm:pr-4 max-h-44"
+                    className="flex flex-col sm:flex-row gap-4 sm:gap-6 p-4 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl shadow-sm hover:shadow-md transition-all group relative pr-12 sm:pr-4 md:max-h-44"
                   >
                     {/* THUMBNAIL */}
                     <div 
