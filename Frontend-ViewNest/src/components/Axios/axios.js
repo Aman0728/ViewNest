@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const api = axios.create({
-    baseURL: "https://viewnest.onrender.com",
+    baseURL: "https://viewnest-backend.onrender.com",
     withCredentials: true
   })
 
