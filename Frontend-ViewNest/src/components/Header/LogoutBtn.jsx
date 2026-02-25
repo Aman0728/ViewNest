@@ -13,14 +13,12 @@ function LogoutBtn() {
       navigate("/")
     }
   return (
-  <button
-    onClick={logoutHandler}
-    className="px-4 md:px-6 py-2 text-xs md:text-sm font-medium text-gray-300
-                             rounded-full transition-all duration-200
-                             hover:text-white hover:bg-gray-800"
-  >
-    Logout
-  </button>
+<button
+  onClick={logoutHandler}
+  className="bg-red-50/50 hover:bg-red-100 dark:bg-red-900/20 dark:hover:bg-red-900/60 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50 px-4 py-2.5 rounded-full font-medium transition-colors"
+>
+  Logout
+</button>
 );
 
 }

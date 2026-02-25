@@ -264,6 +264,17 @@ function Video() {
             {video?.title}
           </h1>
 
+          <button
+              onClick={toggleVideoLike}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition sm:hidden mt-2 ${
+                liked
+                  ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"
+                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 text-gray-800"
+              }`}
+            >
+              <span className=" text-sm">👍</span> {video?.totalLikeCount}
+            </button>
+
           {/* CHANNEL INFO & ACTION BUTTONS */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between mt-4 gap-4">
             {/* Channel info block */}
@@ -291,9 +302,9 @@ function Video() {
               {user?._id !== channelInfo?._id && (
                 <button
                   onClick={toggleSubscribeStatus}
-                  className={`ml-2 px-4 py-2 rounded-full text-sm font-medium transition ${
+                  className={`sm:ml-10 absolute right-8 sm:relative px-4 py-2 rounded-full text-sm font-medium transition ${
                     isSubscribed
-                      ? "bg-gray-200 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700"
+                      ? "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 hover:bg-gray-300 dark:hover:bg-gray-700"
                       : "bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
                   }`}
                 >
@@ -305,10 +316,10 @@ function Video() {
             {/* Like button */}
             <button
               onClick={toggleVideoLike}
-              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition ${
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition hidden sm:inline-block ${
                 liked
                   ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400"
-                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200"
+                  : "bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 dark:text-gray-200 text-gray-800"
               }`}
             >
               <span className="text-lg">👍</span> {video?.totalLikeCount}
