@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { login as authLogin } from '../store/authSlice';
 import { api } from './Axios/axios';
+import ViewNestLogo from "./Header/ViewNest_Logo.png";
 
 function Login() {
   const [username, setUsername] = useState("");
@@ -51,13 +52,9 @@ function Login() {
         
         {/* LOGO PLACEHOLDER */}
         <div className="mb-8 flex justify-center">
-          {/* <span className="inline-block w-full max-w-[100px]">
-              <Logo width="100%" />
-          </span> */}
-          <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-2xl">
-            {/* Temporary visual placeholder until you uncomment your logo */}
-            App
-          </div>
+          <span className="inline-block w-full max-w-[100px]">
+              <img src={ViewNestLogo} alt="ViewNest Logo" className="w-full h-full object-contain" />
+          </span>
         </div>
 
         {/* HEADINGS */}

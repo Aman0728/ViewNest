@@ -3,7 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { login } from "../store/authSlice";
 import { api } from "./Axios/axios";
-import { UploadCloud, Image as ImageIcon, User as UserIcon } from "lucide-react";
+import {
+  UploadCloud,
+  Image as ImageIcon,
+  User as UserIcon,
+} from "lucide-react";
+import ViewNestLogo from "./Header/ViewNest_Logo.png";
 
 function Signup() {
   const dispatch = useDispatch();
@@ -74,7 +79,9 @@ function Signup() {
       }
     } catch (err) {
       console.error(err);
-      setError(err?.response?.data?.message || "Signup failed. Please try again.");
+      setError(
+        err?.response?.data?.message || "Signup failed. Please try again.",
+      );
     } finally {
       setLoading(false);
     }
@@ -82,15 +89,17 @@ function Signup() {
 
   return (
     <div className="min-h-screen py-10 flex items-center justify-center px-4 transition-colors duration-300 bg-gray-50 dark:bg-gray-950">
-      
       {/* SIGNUP CARD */}
       <div className="w-full max-w-xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 shadow-xl dark:shadow-2xl rounded-3xl p-8 sm:p-10 transition-colors duration-300">
-        
         {/* LOGO / HEADER */}
-        <div className="mb-6 flex justify-center">
-          <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/30 rounded-full flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-2xl">
-            App
-          </div>
+        <div className="mb-8 flex justify-center">
+          <span className="inline-block w-full max-w-[100px]">
+            <img
+              src={ViewNestLogo}
+              alt="ViewNest Logo"
+              className="w-full h-full object-contain"
+            />
+          </span>
         </div>
 
         <h2 className="text-center text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white mb-2">
@@ -110,8 +119,18 @@ function Signup() {
         {/* ERROR MESSAGE */}
         {error && (
           <div className="mb-6 px-4 py-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-xl flex items-center gap-3">
-            <svg className="w-5 h-5 text-red-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-5 h-5 text-red-500 shrink-0"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <p className="text-sm font-medium text-red-600 dark:text-red-400">
               {error}
@@ -121,11 +140,12 @@ function Signup() {
 
         {/* FORM */}
         <form onSubmit={registerUser} className="space-y-5">
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             {/* FULL NAME */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Full Name *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Full Name *
+              </label>
               <input
                 type="text"
                 placeholder="John Doe"
@@ -137,7 +157,9 @@ function Signup() {
 
             {/* USERNAME */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Username *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Username *
+              </label>
               <input
                 type="text"
                 placeholder="johndoe123"
@@ -150,7 +172,9 @@ function Signup() {
 
           {/* EMAIL */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Email *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Email *
+            </label>
             <input
               type="email"
               placeholder="you@example.com"
@@ -162,7 +186,9 @@ function Signup() {
 
           {/* PASSWORD */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Password *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+              Password *
+            </label>
             <input
               type="password"
               placeholder="••••••••"
@@ -175,43 +201,75 @@ function Signup() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
             {/* AVATAR UPLOAD */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Avatar *</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Avatar *
+              </label>
               <label className="flex items-center gap-4 p-3 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
                 <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 border border-gray-200 dark:border-gray-700">
                   {avatarPreview ? (
-                    <img src={avatarPreview} alt="Avatar Preview" className="w-full h-full object-cover" />
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar Preview"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <UserIcon className="text-gray-400 dark:text-gray-500" size={24} />
+                    <UserIcon
+                      className="text-gray-400 dark:text-gray-500"
+                      size={24}
+                    />
                   )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     Upload Photo
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-500">JPG, PNG, WEBP</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    JPG, PNG, WEBP
+                  </span>
                 </div>
-                <input type="file" accept="image/*" hidden onChange={handleAvatar} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleAvatar}
+                />
               </label>
             </div>
 
             {/* COVER IMAGE UPLOAD */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">Cover Image</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1.5">
+                Cover Image
+              </label>
               <label className="flex items-center gap-4 p-3 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group">
                 <div className="w-16 h-12 rounded-lg overflow-hidden bg-gray-100 dark:bg-gray-800 flex items-center justify-center shrink-0 border border-gray-200 dark:border-gray-700">
                   {coverPreview ? (
-                    <img src={coverPreview} alt="Cover Preview" className="w-full h-full object-cover" />
+                    <img
+                      src={coverPreview}
+                      alt="Cover Preview"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <ImageIcon className="text-gray-400 dark:text-gray-500" size={24} />
+                    <ImageIcon
+                      className="text-gray-400 dark:text-gray-500"
+                      size={24}
+                    />
                   )}
                 </div>
                 <div className="flex flex-col">
                   <span className="text-sm font-medium text-gray-700 dark:text-gray-300 group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
                     Upload Cover
                   </span>
-                  <span className="text-xs text-gray-500 dark:text-gray-500">Optional</span>
+                  <span className="text-xs text-gray-500 dark:text-gray-500">
+                    Optional
+                  </span>
                 </div>
-                <input type="file" accept="image/*" hidden onChange={handleCover} />
+                <input
+                  type="file"
+                  accept="image/*"
+                  hidden
+                  onChange={handleCover}
+                />
               </label>
             </div>
           </div>
@@ -233,7 +291,6 @@ function Signup() {
               )}
             </button>
           </div>
-          
         </form>
       </div>
     </div>
